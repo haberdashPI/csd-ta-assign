@@ -5,8 +5,9 @@ import {connect} from 'react-redux';
 
 import {Editable,Selectable} from './Editable'
 
-import {DOCUMENT, REMOVE, ADD, CHANGE, COURSE,
-        findcid, assignmentHours, lastName, courseOrder_} from '../reducers/assignments';
+import {DOCUMENT, REMOVE, ADD, CHANGE, COURSE} from '../reducers/commands'
+import {findcid, assignmentHours, lastName,
+        courseOrder_} from '../util/assignment';
 
 
 function intRange(str){
@@ -22,13 +23,15 @@ class _Course extends Component{
   static propTypes = {
     course: PropTypes.instanceOf(Map).isRequired,
     assignments: PropTypes.instanceOf(Map).isRequired,
+
     onRemove: PropTypes.func.isRequired,
     onRename: PropTypes.func.isRequired,
     onRenumber: PropTypes.func.isRequired,
+
     onChangeQuarter: PropTypes.func.isRequired,
     onChangeHours: PropTypes.func.isRequired,
     onChangeTAs: PropTypes.func.isRequired,
-    onChangeEnroll: PropTypes.func.isRequired
+    onChangeEnroll: PropTypes.func.isRequired,
   }
   render(){
     let {course,assignments} = this.props

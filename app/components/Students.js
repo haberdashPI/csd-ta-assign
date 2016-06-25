@@ -4,11 +4,10 @@ import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
 import {EditableArea,Editable,Selectable} from './Editable'
-
 import DoubleMap from '../util/DoubleMap'
-import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT,
-        NEW_INSTRUCTOR_NAME, findcid, subkeys, assignmentHours,
-        lastName, courseOrder_} from '../reducers/assignments';
+import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT} from '../reducers/commands'
+import {findcid, subkeys, assignmentHours,
+        lastName, courseOrder_} from '../util/assignment';
 
 // TODO: allow setting of hours
 // TODO: allow editing of comments

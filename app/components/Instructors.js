@@ -8,9 +8,12 @@ import Course from './Course'
 
 import DoubleMap from '../util/DoubleMap'
 
-import {DOCUMENT, REMOVE, ADD, CHANGE, INSTRUCTOR, COURSE,
-        NEW_INSTRUCTOR_NAME, findcid, subkeys, assignmentHours,
-        lastName, courseOrder_} from '../reducers/assignments';
+import {DOCUMENT, REMOVE, ADD, CHANGE, INSTRUCTOR,
+        COURSE} from '../reducers/commands'
+import {NEW_INSTRUCTOR_NAME} from '../reducers/instructor'
+
+import {findcid, subkeys, assignmentHours, lastName,
+        courseOrder_} from '../util/assignment';
 
 // TODO: highlight based on degree of preferences satisfied
 // TODO: allow editing of comments
@@ -29,19 +32,19 @@ class _Instructor extends Component{
     let cids = instructor.get('courses') || List()
 
     let title = (<div>
-    <div style={{float: "right"}}>
-      <Glyphicon glyph="remove" className="close"
-                 onClick={() => this.props.onRemove(name)}/>
-    </div>
-    <h4>
-      <Editable onChange={to => this.props.onRename(name,to)}
-                placeholder="Name"
-                selectedByDefault={name === NEW_INSTRUCTOR_NAME}
-                onCancel={() => (name === NEW_INSTRUCTOR_NAME ?
-                                 this.props.onRemove(name) : null)}>
-        {name}
-      </Editable>
-    </h4>
+      <div style={{float: "right"}}>
+        <Glyphicon glyph="remove" className="close"
+                   onClick={() => this.props.onRemove(name)}/>
+      </div>
+      <h4>
+        <Editable onChange={to => this.props.onRename(name,to)}
+                  placeholder="Name"
+                  selectedByDefault={name === NEW_INSTRUCTOR_NAME}
+                  onCancel={() => (name === NEW_INSTRUCTOR_NAME ?
+                                   this.props.onRemove(name) : null)}>
+          {name}
+        </Editable>
+      </h4>
     </div>)
 
     return (<Panel header={title}>
