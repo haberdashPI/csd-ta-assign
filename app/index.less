@@ -1,0 +1,35 @@
+@import "~bootstrap/less/bootstrap.less";
+@import "~bootstrap/less/variables.less";
+
+//@import "~bootswatch/lumen/variables.less";
+//@import "~bootswatch/lumen/bootswatch.less";
+
+.close {color: @text-color}
+.close:hover {color: darken(@text-color,10%); cursor: pointer; }
+
+.editable_field {
+	margin: 1px;
+	padding: 1px;
+	border: 1px solid;
+	border-color: rgba(255,255,255,0);
+	display: inline-block;
+	color: @link-color;
+}
+.editable_field:hover {
+	cursor: text;
+	color: darken(@link-color,10%);
+	border-radius: 2px;
+	border: 1px dotted
+}
+
+.editable_input {
+	display: inline-block;
+	margin: 1px;
+	padding: 1px;
+	border: 1px solid;
+	border-radius: 2px;
+}
+
+.error{
+	background: @brand-danger;
+}
