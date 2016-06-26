@@ -5,12 +5,13 @@ import {connect} from 'react-redux';
 
 import {EditableArea,Editable,Selectable} from './Editable'
 import DoubleMap from '../util/DoubleMap'
-import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT} from '../reducers/commands'
+import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT,
+        COURSE, STANDARD, ASSIGN, ASSIGN_MODE} from '../reducers/commands'
 import {findcid, subkeys, assignmentHours,
         lastName, courseOrder_} from '../util/assignment';
 
-// TODO: allow setting of hours
-// TODO: allow editing of comments
+// TODO: highlight student being edited
+
 class _Student extends Component{
   static propTypes = {
     name: PropTypes.string.isRequired,
@@ -19,10 +20,13 @@ class _Student extends Component{
     onRemove: PropTypes.func.isRequired,
     onRename: PropTypes.func.isRequired,
     onChangeHours: PropTypes.func.isRequired,
-    onChangeComments: PropTypes.func.isRequired
+    onChangeComments: PropTypes.func.isRequired,
+
+    onAssignCourse: PropTypes.func.isRequired,
+    onAssign: PropTypes.func.isRequired
   }
   render(){
-    let {name,assignments,student,courses} = this.props
+    let {name,assign_mode,assignments,student,courses,config} = this.props
     let assigned = assignmentHours(assignments)
     let total = student.get('total_hours')
     return (
@@ -40,12 +44,36 @@ class _Student extends Component{
               </Editable>
             </strong>
           </Col>
-
+          <Col md={2}>
+            {(assign_mode.mode !== STANDARD ? null :
+              <Button bsSize="xsmall"
+                      onClick={to => this.props.onAssignCourse(name)}>
+                <Glyphicon glyph="plus"/>Course
+              </Button>)}
+            {(assign_mode.mode !== COURSE ? null :
+              <Button bsSize="xsmall" bsStyle="primary"
+                      onClick={to => {
+                          this.props.onAssign(name,assign_mode.id,
+                                              config.get('hour_unit'))
+                        }}>
+                Add {config.get('hour_unit')} hours to
+                {' '}{courses.getIn([String(assign_mode.id),'number'])}
+                {' ('}{courses.getIn([String(assign_mode.id),'quarter'])}{')'}
+              </Button>)}
+            {(assign_mode.mode !== STUDENT ? null :
+              <Button bsSize="xsmall"
+                      onClick={to => this.props.onAssignCourse(null)}
+                      disabled={assign_mode.id !== name}>
+                {(assign_mode.id === name ? "Done" :
+                  <span><Glyphicon glyph="plus"/>Course</span>)}
+              </Button>)}
+          </Col>
           <Col md={2}>
             {assigned} hours/week of
             <Editable onChange={to => this.props.onChangeHours(name,to)}
-                      validate={x => x % 0.5 === 0}
-                      message={"Must be a multiple of 0.5 hours"}>
+                      validate={x => x % config.get('hour_unit') === 0}
+                      message={"Must be a multiple of "+
+                               config.get('hour_unit')+" hours"}>
               {student.get('total_hours')}
             </Editable>
           </Col>
@@ -54,29 +82,29 @@ class _Student extends Component{
               {student.get('comments')}
             </EditableArea>
           </Col>
+
         </Row>
         <Row>
-          <Col md={1}>
-            <Button bsSize="xsmall"
-                    onClick={to => this.props.setAssignMode(name,null)}>
-              <Glyphicon glyph="plus"/>Course
-            </Button>
-          </Col>
           {(assignments.
-                filter(course => course.get('hours')).
-           sortBy(courseOrder_(courses)).
-           map((assign,cid) =>
-             <Col md={2}><p>
-               {courses.getIn([cid,'name'])} ({assign.get('hours')} hours/week)
-             </p></Col>).
-           toList())}
+           filter(course => course.get('hours')).
+            sortBy(courseOrder_(courses)).
+            map((assign,cid) =>
+              <Col md={2} key={cid}><p>
+                {courses.getIn([cid,'number'])} - {courses.getIn([cid,'quarter'])}
+                {' '}({assign.get('hours')} hours/week)
+              </p></Col>).
+            toList())}
 
         </Row>
       </div>)
   }
 }
 const Student = connect(state => {
-  return subkeys(state.document,['courses'])
+  return {
+    ...subkeys(state.document,['courses']),
+    assign_mode: state.assign_mode,
+    config: state.config
+  }
 },dispatch => {
   return {
     onRemove: student => {
@@ -105,6 +133,26 @@ const Student = connect(state => {
         command: CHANGE,
         field: STUDENT, subfield: ['comments'],
         id: student, to: to
+      })
+    },
+    onAssignCourse: name => {
+      if(name){
+        dispatch({
+          type: ASSIGN_MODE,
+          mode: STUDENT,
+          id: name
+        })
+      }else{
+        dispatch({type: ASSIGN_MODE, mode: STANDARD})
+      }
+    },
+    onAssign: (student,cid,hours) => {
+      dispatch({
+        type: DOCUMENT,
+        command: CHANGE,
+        field: ASSIGN,
+        hours: hours,
+        course: cid, student: student
       })
     }
   }

@@ -5,17 +5,27 @@ import {connect} from 'react-redux';
 
 import {Editable,Selectable} from './Editable'
 
-import {DOCUMENT, REMOVE, ADD, CHANGE, COURSE} from '../reducers/commands'
+import {DOCUMENT, REMOVE, ADD, CHANGE, COURSE,
+        STUDENT, STANDARD, ASSIGN, ASSIGN_MODE} from '../reducers/commands'
 import {findcid, assignmentHours, lastName,
-        courseOrder_} from '../util/assignment';
+        courseOrder_, subkeys} from '../util/assignment';
 
+
+// TODO: highlight course being edited
+// TODO: prevent user from adding too many hours
+// TODO: allow hours to be removed
+// TODO: visual cue for preference of actual assignments
+// TODO: visual cue for preference of potential assignments
+// TODO: allow sorting by overall preference, TA and instructor preference
+//       (when doing this sorting, move unavailable courses to bottom of sort order
 
 function intRange(str){
   if(str % 1 == 0) return true
   else{
     let [a,b,...rest] = str.split('-')
 
-    return rest.length == 0 && (a % 1 == 0) && (b % 1 == 0) && Number(a) < Number(b)
+    return rest.length == 0 && (a % 1 == 0) && (b % 1 == 0) &&
+           Number(a) < Number(b)
   }
 }
 
@@ -23,6 +33,7 @@ class _Course extends Component{
   static propTypes = {
     course: PropTypes.instanceOf(Map).isRequired,
     assignments: PropTypes.instanceOf(Map).isRequired,
+    students: PropTypes.instanceOf(Map).isRequired,
 
     onRemove: PropTypes.func.isRequired,
     onRename: PropTypes.func.isRequired,
@@ -32,9 +43,12 @@ class _Course extends Component{
     onChangeHours: PropTypes.func.isRequired,
     onChangeTAs: PropTypes.func.isRequired,
     onChangeEnroll: PropTypes.func.isRequired,
+
+    onAssignTA: PropTypes.func.isRequired,
+    onAssign: PropTypes.func.isRequired
   }
   render(){
-    let {course,assignments} = this.props
+    let {course,assign_mode,students,assignments,config} = this.props
     let assigned = assignmentHours(assignments)
 
     let cid = findcid(course)
@@ -46,7 +60,7 @@ class _Course extends Component{
         position: "relative",
         right: 0,
         padding: "0.5em",
-        zIndex: 1000000}}>
+        zIndex: 1}}>
         <Glyphicon glyph="remove" className="close"
                    style={{fontSize: "1em"}}
                    onClick={() => this.props.onRemove(cid)}/>
@@ -86,8 +100,9 @@ class _Course extends Component{
         <Col md={2}>
           {assigned} of
           <Editable onChange={to => this.props.onChangeHours(cid,to)}
-                    validate={x => x % 0.5 === 0}
-                    message={"Must be a multiple of 0.5 hours"}>
+                    validate={x => x % config.get('hour_unit') === 0}
+                    message={"Must be a multiple of "+config.get('hour_unit')+
+                             " hours"}>
             {course.getIn(['hours','total'])}
           </Editable>
           hours
@@ -99,21 +114,47 @@ class _Course extends Component{
         </Col>
       </Row>
       <Row>
-        {assignments.sortBy(lastName).map((assign,name) => {
-           <Col md={1}><p>{name} ({assign.get('hours')} hours)</p></Col>
+        {assignments.
+         filter(a => a.get('hours') > 0).
+         sortBy(lastName).
+         map((assign,name) => {
+           return <Col md={1} key={name}>
+             <p>{name} ({assign.get('hours')} hours)</p></Col>
          }).toList()}
-         <Col md={1}>
-           <Button bsSize="xsmall"
-                   onClick={to => this.props.setAssignMode(null,cid)}>
-             <Glyphicon glyph="plus"/>TA
-           </Button>
-         </Col>
+        <Col md={2}>
+          {(assign_mode.mode !== STANDARD ? null :
+            <Button bsSize="xsmall"
+                    onClick={to => this.props.onAssignTA(cid)}>
+              <Glyphicon glyph="plus"/>TA
+            </Button>)}
+            {(assign_mode.mode !== STUDENT ? null :
+              <Button bsSize="xsmall" bsStyle="primary"
+                      onClick={to => {
+                          this.props.onAssign(assign_mode.id,cid,
+                                              config.get('hour_unit'))
+                        }}>
+                Add {config.get('hour_unit')} for {assign_mode.id}
+              </Button>)}
+              {(assign_mode.mode !== COURSE ? null :
+                <Button bsSize="xsmall"
+                        onClick={to => this.props.onAssignTA(null)}
+                        disabled={assign_mode.id !== cid}>
+                  {(assign_mode.id === cid ? "Done" :
+                    <span><Glyphicon glyph="plus"/>TA</span>)}
+                </Button>)}
+        </Col>
       </Row>
     </div>)
   }
 }
 
-export default connect(state => {return {}},dispatch => {
+export default connect(state => {
+  return {
+    ...subkeys(state.document,['students']),
+    assign_mode: state.assign_mode,
+    config: state.config
+  }
+},dispatch => {
   return {
     onRemove: cid => {
       dispatch({type: DOCUMENT, field: COURSE, command: REMOVE, id: cid})
@@ -179,6 +220,26 @@ export default connect(state => {return {}},dispatch => {
         command: CHANGE,
         field: COURSE, subfield: ['enrollment'],
         to: val
+      })
+    },
+    onAssignTA: cid => {
+      if(cid){
+        dispatch({
+          type: ASSIGN_MODE,
+          mode: COURSE,
+          id: cid
+        })
+      }else{
+        dispatch({type: ASSIGN_MODE, mode: STANDARD})
+      }
+    },
+    onAssign: (student,cid,hours) => {
+      dispatch({
+        type: DOCUMENT,
+        command: CHANGE,
+        field: ASSIGN,
+        hours: hours,
+        course: cid, student: student
       })
     }
   }

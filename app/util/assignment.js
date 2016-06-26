@@ -18,7 +18,7 @@ export function lastName(v,name){
     return (name.trim().match(/\s+([^\s]+)$/) || [null,name])[1]
 }
 
-let quarter_order = {'fall': 0, 'winter': 1, 'spring': 2}
+export var quarter_order = {'fall': 0, 'winter': 1, 'spring': 2}
 export function courseOrder_(courses){
   return cid => quarter_order[courses.getIn([cid,'quarter'])] + "_"
               courses.getIn([cid,'name'])

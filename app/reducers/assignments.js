@@ -10,8 +10,11 @@ import DoubleMap from '../util/DoubleMap'
 import student from './student'
 import instructor from './instructor'
 import course from './course'
+import assign from './assign'
 
-import {STUDENT, INSTRUCTOR, COURSE, ASSIGNMENT} from './commands'
+import {quarter_order} from '../util/assignment'
+
+import {STUDENT, INSTRUCTOR, COURSE, ASSIGN} from './commands'
 
 ////////////////////////////////////////////////////////////////////////////////
 // construction
@@ -23,6 +26,11 @@ function arrayadd(obj,key){
   if(!obj[key]) obj[key] = []
 }
 
+function strID_to_cid(strID){
+  let [number,quarter] = strID.trim().split("_")
+  return String(Number(number)*10 + quarter_order[quarter])
+}
+
 function organizeStudents(data){
   let students = {}
   let ranks = new DoubleMap().asMutable()
@@ -31,7 +39,7 @@ function organizeStudents(data){
       students[entry.name] = {}
 
     if(entry.type == "ranking"){
-      ranks = ranks.set(entry.name,entry.value,entry.argument1)
+      ranks = ranks.set(entry.name,strID_to_cid(entry.value),entry.argument1)
     }else if(entry.type == "background"){
       arrayadd(students[entry.name],'background')
       students[entry.name].background.push(entry.argument1)
@@ -58,7 +66,7 @@ function organizeInstructors(data){
       instructors[entry.name] = {}
 
     if(entry.type == "ranking"){
-      ranks.set(entry.argument1,entry.value,entry.argument2)
+      ranks.set(entry.argument1,strID_to_cid(entry.value),entry.argument2)
     }else{
       instructors[entry.name][entry.type] = entry.value
     }
@@ -71,14 +79,12 @@ function organizeCourses(data){
   let courses = {}
   let coursesByInstructor = Map().asMutable()
   let uniques = {}
-  let cid = 0
   for(let entry of data){
-    cid += 1
     let hour_reg = /([0-9]+) to ([0-9]+) TA - ([0-9.]+) hours \/ week/
     let [__,pmin,max,total] = entry.hours.match(hour_reg)
 
-    let unique = entry.number+ "_" + entry.quarter
-    if(uniques[unique])
+    let cid = Number(entry.number)*10 + quarter_order[entry.quarter]
+    if(courses[cid])
       throw new AssignmentError(`Multiple courses with the number
         ${entry.number} in the ${entry.quarter} quarter.`)
 
@@ -131,6 +137,7 @@ export default function assignment(state = createInitialState(), action){
         case STUDENT: return student(state,action)
         case INSTRUCTOR: return instructor(state,action)
         case COURSE: return course(state,action)
+        case ASSIGN: return assign(state,action)
       }
     default: return state
   }

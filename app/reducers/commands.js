@@ -5,7 +5,7 @@ export const CHANGE = 'CHANGE'
 export const STUDENT = 'STUDENT'
 export const INSTRUCTOR = 'INSTRUCTOR'
 export const COURSE = 'COURSE'
-export const ASSIGNMENT = 'ASSIGNMENT'
+export const ASSIGN = 'ASSIGN'
 
 export const DOCUMENT = 'DOCUMENT'
 
