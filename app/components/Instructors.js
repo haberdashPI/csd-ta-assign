@@ -28,16 +28,20 @@ class _Instructor extends Component{
   }
 
   render(){
-    let {name,instructor,courses,assignments} = this.props
+    let {name,instructor,courses,assignments,assign_mode} = this.props
     let cids = instructor.get('courses') || List()
+    let unfocused = (assign_mode.mode === COURSE &&
+                     courses.getIn([assign_mode.id,'instructor']) !== name)
 
     let title = (<div>
       <div style={{float: "right"}}>
         <Glyphicon glyph="remove" className="close"
-                   onClick={() => this.props.onRemove(name)}/>
+                   onClick={() => (unfocused ? null :
+                                   this.props.onRemove(name))}/>
       </div>
       <h4>
         <Editable onChange={to => this.props.onRename(name,to)}
+                  disabled={unfocused}
                   placeholder="Name"
                   selectedByDefault={name === NEW_INSTRUCTOR_NAME}
                   onCancel={() => (name === NEW_INSTRUCTOR_NAME ?
@@ -47,30 +51,37 @@ class _Instructor extends Component{
       </h4>
     </div>)
 
-    return (<Panel header={title}>
-      <Row>
-        <Col md={4}>
-          Courses{' '}
-          <Button inline bsSize="xsmall" onClick={() => this.props.onAdd(name)}>
-            <Glyphicon glyph="plus"/>
-          </Button>
-        </Col>
-      </Row>
-      {cids.
-       sortBy(courseOrder_(courses)).
-       map(cid => {
-         let course = courses.get(cid)
-         return (<Course key={cid} course={course}
-                         assignments={assignments.get(null,cid)}/>)
-       })}
-      <Row><Col md={4}><p><strong>Comments</strong></p></Col></Row>
-      <Row><Col md={12}><p>{instructor.get('comment')}</p></Col></Row>
-    </Panel>)
+    return (<div className={(unfocused ? "unfocused" : "")}>
+      <Panel header={title}>
+        <Row>
+          <Col md={4}>
+            Courses{' '}
+            <Button inline bsSize="xsmall"
+                    disabled={unfocused}
+                    onClick={() => this.props.onAdd(name)}>
+              <Glyphicon glyph="plus"/>
+            </Button>
+          </Col>
+        </Row>
+        {cids.
+         sortBy(courseOrder_(courses)).
+         map(cid => {
+           let course = courses.get(cid)
+           return (<Course key={cid} course={course}
+                           assignments={assignments.get(null,cid)}/>)
+         })}
+        <Row><Col md={4}><p><strong>Comments</strong></p></Col></Row>
+        <Row><Col md={12}><p>{instructor.get('comment')}</p></Col></Row>
+      </Panel>
+    </div>)
   }
 }
 
 const Instructor = connect(state => {
-  return subkeys(state.document,['courses','assignments'])
+  return {
+    ...subkeys(state.document,['courses','assignments']),
+    assign_mode: state.assign_mode
+  }
 },dispatch => {
   return {
     onRemove: instructor => {

@@ -56,7 +56,8 @@ export class EditableArea extends Component{
     if(!this.state.editing){
       return (<div className="editable_field"
                    style={{minWidth: 100, minHeight: 10}}
-                   onClick={() => this.startEditing()}
+                   onClick={() => (this.props.disabled ? null :
+                                   this.startEditing())}
                    ref={c => this._field = c}>
         <p>{this.props.children}</p>
       </div>)
@@ -121,7 +122,8 @@ export class Editable extends Component{
   render(){
     if(!this.state.editing){
       return (<div className="editable_field"
-                   onClick={() => this.startEditing()}>
+                   onClick={() => (this.props.disabled ? null :
+                                   this.startEditing())}>
         {this.props.children}
       </div>)
     }else{
@@ -171,7 +173,8 @@ export class Selectable extends Component{
   render(){
     if(!this.state.editing){
       return (<div className="editable_field"
-                   onClick={() => setTimeout(this.startEditing(),250)}>
+                   onClick={() => (this.props.disabled ? null :
+                                   setTimeout(this.startEditing(),250))}>
         {this.props.children}
       </div>)
     }else{
