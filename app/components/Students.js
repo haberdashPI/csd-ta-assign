@@ -12,105 +12,45 @@ import {findcid, subkeys, assignmentHours,
 
 // TODO: highlight student being edited
 
-class _Student extends Component{
+class _CloseButton extends Component{
   static propTypes = {
     name: PropTypes.string.isRequired,
-    assignments: PropTypes.instanceOf(Map).isRequired,
-    student: PropTypes.instanceOf(Map).isRequired,
-    onRemove: PropTypes.func.isRequired,
-    onRename: PropTypes.func.isRequired,
-    onChangeHours: PropTypes.func.isRequired,
-    onChangeComments: PropTypes.func.isRequired,
-
-    onAssignCourse: PropTypes.func.isRequired,
-    onAssign: PropTypes.func.isRequired
+    onRemove: PropTypes.func.isRequired
   }
   render(){
-    let {name,assign_mode,assignments,student,courses,config} = this.props
-    let assigned = assignmentHours(assignments)
-    let total = student.get('total_hours')
-    return (
-      <div>
-        <Row>
-          <Col md={2}>
-            <div style={{float: "right"}}>
-              <Glyphicon glyph="remove" className="close"
-                         style={{fontSize: "1em"}}
-                         onClick={() => this.props.onRemove(name)}/>
-            </div>
-            <strong>
-              <Editable onChange={to => this.props.onRename(name,to)}>
-                {name}
-              </Editable>
-            </strong>
-          </Col>
-          <Col md={2}>
-            {(assign_mode.mode !== STANDARD ? null :
-              <Button bsSize="xsmall"
-                      onClick={to => this.props.onAssignCourse(name)}>
-                <Glyphicon glyph="plus"/>Course
-              </Button>)}
-            {(assign_mode.mode !== COURSE ? null :
-              <Button bsSize="xsmall" bsStyle="primary"
-                      onClick={to => {
-                          this.props.onAssign(name,assign_mode.id,
-                                              config.get('hour_unit'))
-                        }}>
-                Add {config.get('hour_unit')} hours to
-                {' '}{courses.getIn([String(assign_mode.id),'number'])}
-                {' ('}{courses.getIn([String(assign_mode.id),'quarter'])}{')'}
-              </Button>)}
-            {(assign_mode.mode !== STUDENT ? null :
-              <Button bsSize="xsmall"
-                      onClick={to => this.props.onAssignCourse(null)}
-                      disabled={assign_mode.id !== name}>
-                {(assign_mode.id === name ? "Done" :
-                  <span><Glyphicon glyph="plus"/>Course</span>)}
-              </Button>)}
-          </Col>
-          <Col md={2}>
-            {assigned} hours/week of
-            <Editable onChange={to => this.props.onChangeHours(name,to)}
-                      validate={x => x % config.get('hour_unit') === 0}
-                      message={"Must be a multiple of "+
-                               config.get('hour_unit')+" hours"}>
-              {student.get('total_hours')}
-            </Editable>
-          </Col>
-          <Col md={4}><em>Comments</em>
-            <EditableArea onChange={to => this.props.onChangeComments(name,to)}>
-              {student.get('comments')}
-            </EditableArea>
-          </Col>
-
-        </Row>
-        <Row>
-          {(assignments.
-           filter(course => course.get('hours')).
-            sortBy(courseOrder_(courses)).
-            map((assign,cid) =>
-              <Col md={2} key={cid}><p>
-                {courses.getIn([cid,'number'])} - {courses.getIn([cid,'quarter'])}
-                {' '}({assign.get('hours')} hours/week)
-              </p></Col>).
-            toList())}
-
-        </Row>
-      </div>)
+    let {name,onRemove} = this.props
+    return (<div style={{float: "right"}}>
+      <Glyphicon glyph="remove" className="close"
+                 style={{fontSize: "1em"}}
+                 onClick={() => onRemove(name)}/>
+    </div>)
   }
 }
-const Student = connect(state => {
-  return {
-    ...subkeys(state.document,['courses']),
-    assign_mode: state.assign_mode,
-    config: state.config
-  }
-},dispatch => {
+const CloseButton = connect(state => {return {}},dispatch => {
   return {
     onRemove: student => {
       dispatch({type: DOCUMENT, command: REMOVE, field: STUDENT, id: student})
-    },
-    onRename: (student,to) => {
+    }
+  }
+})(_CloseButton)
+
+class _StudentName extends Component{
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired
+  }
+  render(){
+    let {name,onChange} = this.props
+    return (<strong>
+      <Editable onChange={to => onChange(name,to)}>
+        {name}
+      </Editable>
+    </strong>)
+  }
+}
+const StudentName = connect(state => {return {}},dispatch => {
+  return {
+    onChange: (student,to) => {
       dispatch({
         type: DOCUMENT,
         command: CHANGE,
@@ -118,23 +58,116 @@ const Student = connect(state => {
         id: student,
         to: to
       })
-    },
-    onChangeHours: (student,to) => {
+    }
+  }
+})(_StudentName)
+
+class _StudentHours extends Component{
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    student: PropTypes.instanceOf(Map).isRequired,
+    config: PropTypes.instanceOf(Map).isRequired,
+    onChange: PropTypes.func.isRequired
+  }
+  render(){
+    let {name,student,config,onChange} = this.props
+    return (<Editable onChange={to => onChange(name,to)}
+                      validate={x => x % config.get('hour_unit') === 0}
+                      message={"Must be a multiple of "+
+                               config.get('hour_unit')+" hours"}>
+      {student.get('total_hours')}
+    </Editable>)
+  }
+}
+const StudentHours = connect(state => {
+  return {config: state.config}
+},dispatch => {
+  return {
+    onChange: (student,to) => {
       dispatch({
         type: DOCUMENT,
         command: CHANGE,
         field: STUDENT, subfield: ['total_hours'],
-        id: student, to: to
+        id: student,
+        to: to
       })
-    },
-    onChangeComments: (student,to) => {
+    }
+  }
+})(_StudentHours)
+
+class _StudentComments extends Component{
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    student: PropTypes.instanceOf(Map).isRequired,
+    onChange: PropTypes.func.isRequired
+  }
+  render(){
+    let {name,student,onChange} = this.props
+    return (<span><em>Comments</em>
+      <EditableArea onChange={to => onChange(name,to)}>
+        {student.get('comments')}
+      </EditableArea></span>)
+  }
+}
+const StudentComments = connect(state => {return {}},dispatch => {
+  return {
+    onChange: (student,to) => {
       dispatch({
         type: DOCUMENT,
         command: CHANGE,
         field: STUDENT, subfield: ['comments'],
-        id: student, to: to
+        id: student,
+        to: to
       })
-    },
+    }
+  }
+})(_StudentComments)
+
+class _AssignButton extends Component{
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    student: PropTypes.instanceOf(Map).isRequired,
+    assign_mode: PropTypes.object.isRequired,
+    config: PropTypes.instanceOf(Map).isRequired,
+
+    onAssignCourse: PropTypes.func.isRequired,
+    onAssign: PropTypes.func.isRequired
+  }
+  render(){
+    let {name,assign_mode,config,student} = this.props
+    if(assign_mode.mode === STANDARD){
+      return (<Button bsSize="xsmall"
+                      onClick={to => this.props.onAssignCourse(name)}>
+      <Glyphicon glyph="plus"/>Course
+      </Button>)
+    }
+    else if(assign_mode.mode === COURSE){
+      return (<Button bsSize="xsmall" bsStyle="primary"
+                      onClick={to => {
+                          this.props.onAssign(name,assign_mode.id,
+                                              config.get('hour_unit'))
+                        }}>
+        Add {config.get('hour_unit')} hours to
+        {' '}{courses.getIn([String(assign_mode.id),'number'])}
+        {' ('}{courses.getIn([String(assign_mode.id),'quarter'])}{')'}
+      </Button>)
+    }else if(assign_mode.mode === STUDENT){
+      return (<Button bsSize="xsmall"
+                      onClick={to => this.props.onAssignCourse(null)}
+                      disabled={assign_mode.id !== name}>
+        {(assign_mode.id === name ? "Done" :
+          <span><Glyphicon glyph="plus"/>Course</span>)}
+      </Button>)
+    }
+  }
+}
+const AssignButton = connect(state => {
+  return {
+    assign_mode: state.assign_mode,
+    config: state.config
+  }
+},dispatch => {
+  return {
     onAssignCourse: name => {
       if(name){
         dispatch({
@@ -156,7 +189,67 @@ const Student = connect(state => {
       })
     }
   }
-})(_Student)
+})(_AssignButton)
+
+class _Assignments extends Component{
+  static PropTypes = {
+    courses: PropTypes.instanceOf(Map).isRequired,
+    assignments: PropTypes.instanceOf(Map).isRequired
+  }
+  render(){
+    let {assignments,courses} = this.props
+    return (<div>
+        {assignments.
+         filter(course => course.get('hours')).
+         sortBy(courseOrder_(courses)).
+         map((assign,cid) =>
+           <Col md={2} key={cid}><p>
+             {courses.getIn([cid,'number'])} - {courses.getIn([cid,'quarter'])}
+             {' '}({assign.get('hours')} hours/week)
+           </p></Col>).
+         toList()}
+    </div>)
+  }
+}
+const Assignments = connect(state => {
+  return subkeys(state.document,['courses'])
+})(_Assignments)
+
+class Student extends Component{
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    assignments: PropTypes.instanceOf(Map).isRequired,
+    student: PropTypes.instanceOf(Map).isRequired,
+  }
+  render(){
+    let {name,assignments,student} = this.props
+    let assigned = assignmentHours(assignments)
+    return (
+      <div>
+        <Row>
+          <Col md={2}>
+            <CloseButton name={name}/>
+            <StudentName name={name}/>
+          </Col>
+          <Col md={2}>
+            <AssignButton name={name} student={student}
+                          assignments={assignments}/>
+          </Col>
+          <Col md={2}>
+            {assigned} hours/week of
+            <StudentHours name={name} student={student}/>
+          </Col>
+          <Col md={4}>
+            <StudentComments name={name} student={student}/>
+          </Col>
+
+        </Row>
+        <Row>
+          <Assignments assignments={assignments}/>
+        </Row>
+      </div>)
+  }
+}
 
 // TODO: show students by cohort
 // TODO: allow setting hours by cohort
