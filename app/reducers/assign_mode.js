@@ -1,10 +1,27 @@
 import {ASSIGN_MODE, DOCUMENT, STANDARD, STUDENT,
         COURSE, REMOVE, CHANGE, ASSIGN, INSTRUCTOR} from './commands'
+import {assignmentHours} from '../util/assignment'
 
-export default function assign_mode(state = {mode: STANDARD},action){
+function willCompleteHours(state,action,document){
+  if(state.mode === STUDENT){
+    let asg = document.get('assignments').get(action.student,null)
+    let hours = action.hours + assignmentHours(asg)
+    return hours >= document.getIn(['students',action.student,'total_hours'])
+  }else if(state.mode === COURSE){
+    let asg = document.get('assignments').get(null,action.course)
+    let hours = action.hours + assignmentHours(asg)
+    return hours >= document.getIn(['courses',action.course,'hours','total'])
+  }
+}
+
+export default function assign_mode(state = {mode: STANDARD},action,document){
   switch(action.type){
-    case ASSIGN_MODE: return {...action}
+    case ASSIGN_MODE: return {mode: action.mode, id: action.id}
     case DOCUMENT:
+      // if
+      if(action.field == ASSIGN && willCompleteHours(state,action,document))
+        return {mode: STANDARD}
+
       // if we change the student name, update the assignment state
       if(state.mode === STUDENT && action.field == STUDENT){
 
@@ -23,7 +40,8 @@ export default function assign_mode(state = {mode: STANDARD},action){
         if(action.command === REMOVE && action.id === state.id)
           return {mode: STANDARD}
       }else if(state.mode === COURSE && action.field == INSTRUCTOR){
-        if(action.command === REMOVE && action.id === state.instructor)
+        if(action.command === REMOVE &&
+           action.id === document.getIn(['courses',state.id,'instructor']))
           return {mode: STANDARD}
       }
       return state

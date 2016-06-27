@@ -9,11 +9,16 @@ function addInstructor(state,action){
 
 function changeInstructor(state,action){
   let instructor = action.id
-  return state.withMutations(s => {
-    let data = s.getIn(['instructors',instructor])
-    return s.deleteIn(['instructors',instructor]).
-             setIn(['instructors',action.to],data)
-  })
+  if(action.subfields[0] === 'name'){
+    return state.withMutations(s => {
+      let data = s.getIn(['instructors',instructor])
+      return s.deleteIn(['instructors',instructor]).
+               setIn(['instructors',action.to],data)
+    })
+  }else{
+    return state.setIn(['instructors',instructor].concat(action.subfields),
+                       action.to)
+  }
 }
 
 function removeInstructor(state,action){

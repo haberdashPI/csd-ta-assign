@@ -40,5 +40,26 @@
 }
 .focused{
 	border: 1px solid;
-	border-color: @brand-primary
+	border-color: @brand-primary;
+}
+
+.completed{
+	background: lighten(@brand-info,20%);
+	border: 1px solid;
+	border-radius: 3px;
+	border-color: @brand-info;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	display: inline;
+}
+
+.uncompleted{
+	background: lighten(@brand-danger,20%);
+	font-style: italic;
+	border: 1px solid;
+	border-radius: 3px;
+	border-color: @brand-danger;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	display: inline;
 }

@@ -3,7 +3,7 @@ import {Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
-import {Editable,Selectable} from './Editable'
+import {Editable,Selectable,EditableArea} from './Editable'
 import Course from './Course'
 
 import DoubleMap from '../util/DoubleMap'
@@ -23,12 +23,15 @@ class _Instructor extends Component{
     instructor: PropTypes.instanceOf(Map).isRequired,
     courses: PropTypes.instanceOf(Map).isRequired,
     assignments: PropTypes.instanceOf(DoubleMap).isRequired,
+
     onRemove: PropTypes.func.isRequired,
-    onAdd: PropTypes.func.isRequired
+    onAdd: PropTypes.func.isRequired,
+    onChangeComment: PropTypes.func.isRequired
   }
 
   render(){
-    let {name,instructor,courses,assignments,assign_mode} = this.props
+    let {name,instructor,courses,assignments,assign_mode,
+         onChangeComment} = this.props
     let cids = instructor.get('courses') || List()
     let unfocused = (assign_mode.mode === COURSE &&
                      courses.getIn([assign_mode.id,'instructor']) !== name)
@@ -71,7 +74,12 @@ class _Instructor extends Component{
                            assignments={assignments.get(null,cid)}/>)
          })}
         <Row><Col md={4}><p><strong>Comments</strong></p></Col></Row>
-        <Row><Col md={12}><p>{instructor.get('comment')}</p></Col></Row>
+        <Row><Col md={12}>
+          <EditableArea onChange={to => onChangeComment(name,to)}
+                        disabled={unfocused}>
+            {instructor.get('comment')}
+          </EditableArea>
+        </Col></Row>
       </Panel>
     </div>)
   }
@@ -90,10 +98,14 @@ const Instructor = connect(state => {
     },
     onRename: (instructor,to) => {
       dispatch({type: DOCUMENT, command: CHANGE, field: INSTRUCTOR,
-                id: instructor, to: to})
+                subfields: ['name'], id: instructor, to: to})
     },
     onAdd: instructor => {
       dispatch({type: DOCUMENT, command: ADD, field: COURSE, id: instructor})
+    },
+    onChangeComment: (instructor,to) => {
+      dispatch({type: DOCUMENT, command: CHANGE, field: INSTRUCTOR,
+                subfields: ['comment'], id: instructor, to: to})
     }
   }
 })(_Instructor)

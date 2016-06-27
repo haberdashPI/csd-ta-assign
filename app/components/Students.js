@@ -10,8 +10,6 @@ import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT,
 import {findcid, subkeys, assignmentHours,
         lastName, courseOrder_} from '../util/assignment';
 
-// TODO: highlight student being edited
-
 class _CloseButton extends Component{
   static propTypes = {
     name: PropTypes.string.isRequired,
@@ -68,16 +66,16 @@ class _StudentHours extends Component{
   static propTypes = {
     name: PropTypes.string.isRequired,
     student: PropTypes.instanceOf(Map).isRequired,
-    config: PropTypes.instanceOf(Map).isRequired,
+    config: PropTypes.object.isRequired,
     onChange: PropTypes.func.isRequired,
     disabled: PropTypes.bool.isRequired,
   }
   render(){
     let {name,student,config,onChange,disabled} = this.props
     return (<Editable onChange={to => onChange(name,to)}
-                      validate={x => x % config.get('hour_unit') === 0}
+                      validate={x => (x % config.hour_unit === 0 && x > 0)}
                       message={"Must be a multiple of "+
-                               config.get('hour_unit')+" hours"}
+                               config.hour_unit+" hours"}
                       disabled={disabled}>
       {student.get('total_hours')}
     </Editable>)
@@ -134,7 +132,7 @@ class _AssignButton extends Component{
     name: PropTypes.string.isRequired,
     student: PropTypes.instanceOf(Map).isRequired,
     assign_mode: PropTypes.object.isRequired,
-    config: PropTypes.instanceOf(Map).isRequired,
+    config: PropTypes.object.isRequired,
     courses: PropTypes.instanceOf(Map).isRequired,
 
     onAssignCourse: PropTypes.func.isRequired,
@@ -143,6 +141,7 @@ class _AssignButton extends Component{
   }
   render(){
     let {name,assign_mode,config,student,disabled,courses} = this.props
+
     if(assign_mode.mode === STANDARD){
       return (<Button bsSize="xsmall"
                       disabled={disabled}
@@ -155,9 +154,9 @@ class _AssignButton extends Component{
                       disabled={disabled}
                       onClick={to => {
                           this.props.onAssign(name,assign_mode.id,
-                                              config.get('hour_unit'))
+                                              config.hour_unit)
                         }}>
-        Add {config.get('hour_unit')} hours to
+        Add {config.hour_unit} hours to
         {' '}{courses.getIn([String(assign_mode.id),'number'])}
         {' ('}{courses.getIn([String(assign_mode.id),'quarter'])}{')'}
       </Button>)
@@ -191,7 +190,7 @@ const AssignButton = connect(state => {
         dispatch({type: ASSIGN_MODE, mode: STANDARD})
       }
     },
-    onAssign: (student,cid,hours) => {
+    onAssign: (student,cid,hours,complete) => {
       dispatch({
         type: DOCUMENT,
         command: CHANGE,
@@ -205,11 +204,16 @@ const AssignButton = connect(state => {
 
 class _Assignments extends Component{
   static PropTypes = {
+    name: PropTypes.string.isRequired,
+    assignments: PropTypes.instanceOf(Map).isRequired,
+    disabled: PropTypes.bool.isRequired,
+
     courses: PropTypes.instanceOf(Map).isRequired,
-    assignments: PropTypes.instanceOf(Map).isRequired
+    config: PropTypes.object.isRequired,
+    onUnassign: PropTypes.func.isRequired
   }
   render(){
-    let {assignments,courses} = this.props
+    let {name,assignments,courses,config,disabled,onUnassign} = this.props
     return (<div>
         {assignments.
          filter(course => course.get('hours')).
@@ -218,13 +222,35 @@ class _Assignments extends Component{
            <Col md={2} key={cid}><p>
              {courses.getIn([cid,'number'])} - {courses.getIn([cid,'quarter'])}
              {' '}({assign.get('hours')} hours/week)
+             <Button bsSize="xsmall"
+                     disabled={disabled}
+                     onClick={to => onUnassign(name,cid,
+                                               config.hour_unit)}>
+               <Glyphicon glyph="minus"/>
+             </Button>
            </p></Col>).
          toList()}
     </div>)
   }
 }
 const Assignments = connect(state => {
-  return subkeys(state.document,['courses'])
+  return {
+    ...subkeys(state.document,['courses']),
+    config: state.config
+  }
+},dispatch => {
+  return {
+    onUnassign: (name,cid,unit) => {
+      dispatch({
+        type: DOCUMENT,
+        command: CHANGE,
+        field: ASSIGN,
+        hours: -unit,
+        student: name,
+        course: cid
+      })
+    }
+  }
 })(_Assignments)
 
 class _Student extends Component{
@@ -239,6 +265,8 @@ class _Student extends Component{
     let assigned = assignmentHours(assignments)
     let unfocused = (assign_mode.mode === STUDENT &&
                      assign_mode.id !== name)
+    let completed = assigned >= student.get('total_hours')
+
     return (
       <div className={(unfocused ? "unfocused" : "")}>
         <Row>
@@ -249,16 +277,19 @@ class _Student extends Component{
           <Col md={2}>
             <AssignButton name={name} student={student}
                           assignments={assignments}
-                          disabled={unfocused}/>
+                          disabled={unfocused || completed}/>
           </Col>
           <Col md={2}>
-            {assigned} hours/week of
-            <StudentHours name={name} student={student}
-                          disabled={unfocused}/>
+            <div className={(completed ? "completed" : "uncompleted")}>
+              {assigned} hours/week of
+              <StudentHours name={name} student={student}
+                            disabled={unfocused}/>
+            </div>
           </Col>
         </Row>
         <Row>
-          <Assignments assignments={assignments}/>
+          <Assignments assignments={assignments} name={name}
+                       disabled={unfocused}/>
         </Row>
         <Row>
           <Col md={8}>
