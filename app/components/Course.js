@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from 'react';
-import {Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
+import {Well, Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
@@ -11,9 +11,12 @@ import {findcid, assignmentHours, lastName,
         courseOrder_, subkeys} from '../util/assignment';
 
 
-// TODO: show the preferences for each assignment
-// TODO: visual cue for preference of actual assignments
-// TODO: visual cue for preference of potential assignments
+// TODO: create a small "badge" for the assignment mode
+//       that allows you to clear the mode, and adjust how
+//       stuff is viewed (as per below).
+// TODO: in assign mode show the preferences for each potential assignment
+//       (the user should be able to specify wether it's a combination
+//        or one of TA and instructor preference)
 // TODO: allow sorting by overall preference, TA and instructor preference
 //       (when doing this sorting, move unavailable courses to bottom of
 //        sort order)
@@ -268,20 +271,20 @@ class _Assignments extends Component{
   }
   render(){
     let {assignments,course,onUnassign,disabled,config} = this.props
+    let filtered = assignments.filter(a => a.get('hours') > 0).
+                               sortBy(lastName)
     return (<div>
-      {assignments.
-       filter(a => a.get('hours') > 0).sortBy(lastName).
-       map((assign,name) =>
-         <Col md={3} key={name}>
-           <p>{name} ({assign.get('hours')} hours)
-             <Button bsSize="xsmall"
-                     disabled={disabled}
-                     onClick={to => onUnassign(name,course.get('cid'),
-                                               config.hour_unit)}>
-               <Glyphicon glyph="minus"/>
-             </Button>
-           </p>
-         </Col>).toList()}
+      {filtered.map((assign,name) =>
+        <Col md={3} key={name}>
+          <p>{name} ({assign.get('hours')} hours)
+            <Button bsSize="xsmall"
+                    disabled={disabled}
+                    onClick={to => onUnassign(name,course.get('cid'),
+                                              config.hour_unit)}>
+              <Glyphicon glyph="minus"/>
+            </Button>
+          </p>
+        </Col>).toList()}
     </div>)
   }
 }
@@ -301,6 +304,49 @@ const Assignments = connect(state => {
     }
   }
 })(_Assignments)
+
+function rankClass(n,def){
+  switch(Number(n || def)){
+    case -2: return "terrible"
+    case -1: return "poor"
+    case 0: return "okay"
+    case 1: return "good"
+    case 2: return "excellent"
+  }
+}
+
+function capitalize(str){
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+function AssignPreferences({assignments,course}){
+  let filtered = assignments.filter(a => a.get('hours') > 0).
+                             sortBy(lastName)
+  return (<div>
+      <Row>
+        <Col md={2}>Instructor:</Col>
+        {filtered.map((assign,name) => {
+           let instructorRank = rankClass(assign.get('instructorRank'),-1)
+           return (<Col md={3} key={name}>
+             <span className={instructorRank}>
+               {capitalize(instructorRank)} fit
+             </span>
+           </Col>)
+         })}
+      </Row>
+      <Row>
+        <Col md={2}>TA:</Col>
+        {filtered.map((assign,name) => {
+           let studentRank = rankClass(assign.get('studentRank'),0)
+           return (<Col md={3} key={name}>
+        <span className={studentRank}>
+          {capitalize(studentRank)} fit
+        </span>
+           </Col>)
+         })}
+      </Row>
+  </div>)
+}
 
 class _AssignButton extends Component{
   static propTypes = {
@@ -412,14 +458,18 @@ class _Course extends Component{
             </div>
           </Col>
         </Row>
-        <Row>
-          <Assignments assignments={assignments} disabled={unfocused}
-                       course={course}/>
-          <Col md={2}>
-            <AssignButton course={course}
-                          disabled={unfocused || completed}/>
-          </Col>
-        </Row>
+        <Well>
+          <Row>
+            <Col md={2}>
+              <AssignButton course={course}
+                            disabled={unfocused || completed}/>
+            </Col>
+            <Assignments assignments={assignments} disabled={unfocused}
+                         course={course}/>
+          </Row>
+          <AssignPreferences assignments={assignments}
+                             course={course}/>
+        </Well>
     </div>)
   }
 }

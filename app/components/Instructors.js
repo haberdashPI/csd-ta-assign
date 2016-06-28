@@ -15,8 +15,6 @@ import {NEW_INSTRUCTOR_NAME} from '../reducers/instructor'
 import {findcid, subkeys, assignmentHours, lastName,
         courseOrder_} from '../util/assignment';
 
-// TODO: highlight based on degree of preferences satisfied
-// TODO: allow editing of comments
 class _Instructor extends Component{
   static propTypes = {
     name: PropTypes.string.isRequired,

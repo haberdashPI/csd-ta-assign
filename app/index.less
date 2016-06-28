@@ -63,3 +63,40 @@
 	padding-right: 0.5em;
 	display: inline;
 }
+
+.terrible{
+	text-weight: bold;
+}
+
+.terrible,.poor{
+	background: lighten(@brand-warning,20%);
+	border: 1px solid;
+	border-radius: 3px;
+	border-color: @brand-warning;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	display: inline;
+}
+
+.okay{
+	background: rgba(255,255,255,0);
+	border: 1px solid;
+	border-radius: 3px;
+	border-color: rgba(255,255,255,0);
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	display: inline;
+}
+
+.good,.excellent{
+	background: lighten(@brand-success,20%);
+	border: 1px solid;
+	border-radius: 3px;
+	border-color: @brand-success;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	display: inline;
+}
+.excellent{
+	font-weight: bold;
+}
