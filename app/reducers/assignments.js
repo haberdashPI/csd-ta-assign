@@ -39,7 +39,7 @@ function organizeStudents(data){
       students[entry.name] = {}
 
     if(entry.type == "ranking"){
-      ranks = ranks.set(entry.name,strID_to_cid(entry.value),entry.argument1)
+      ranks = ranks.set(entry.name,strID_to_cid(entry.value),Number(entry.argument1))
     }else if(entry.type == "background"){
       arrayadd(students[entry.name],'background')
       students[entry.name].background.push(entry.argument1)
@@ -66,7 +66,7 @@ function organizeInstructors(data){
       instructors[entry.name] = {}
 
     if(entry.type == "ranking"){
-      ranks.set(entry.argument1,strID_to_cid(entry.value),entry.argument2)
+      ranks.set(entry.argument1,strID_to_cid(entry.value),Number(entry.argument2))
     }else{
       instructors[entry.name][entry.type] = entry.value
     }

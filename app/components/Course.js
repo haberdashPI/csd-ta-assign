@@ -6,14 +6,14 @@ import {connect} from 'react-redux';
 import {Editable,Selectable} from './Editable'
 
 import {DOCUMENT, REMOVE, ADD, CHANGE, COURSE,
-        STUDENT, STANDARD, ASSIGN, ASSIGN_MODE} from '../reducers/commands'
+        STUDENT, STANDARD, ASSIGN, ASSIGN_MODE,
+        OVERALL_FIT} from '../reducers/commands'
+
 import {findcid, assignmentHours, lastName,
-        courseOrder_, subkeys} from '../util/assignment';
+        courseOrder_, subkeys, rankClass,
+        combineRanks} from '../util/assignment';
 
 
-// TODO: create a small "badge" for the assignment mode
-//       that allows you to clear the mode, and adjust how
-//       stuff is viewed (as per below).
 // TODO: in assign mode show the preferences for each potential assignment
 //       (the user should be able to specify wether it's a combination
 //        or one of TA and instructor preference)
@@ -305,48 +305,53 @@ const Assignments = connect(state => {
   }
 })(_Assignments)
 
-function rankClass(n,def){
-  switch(Number(n || def)){
-    case -2: return "terrible"
-    case -1: return "poor"
-    case 0: return "okay"
-    case 1: return "good"
-    case 2: return "excellent"
-  }
-}
-
 function capitalize(str){
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
-function AssignPreferences({assignments,course}){
-  let filtered = assignments.filter(a => a.get('hours') > 0).
-                             sortBy(lastName)
-  return (<div>
+class _AssignPreferences extends Component{
+  static propTypes = {
+    assignments: PropTypes.instanceOf(Map).isRequired,
+    course: PropTypes.instanceOf(Map).isRequired,
+    config: PropTypes.object.isRequired
+  }
+  render(){
+    let {assignments,course,config} = this.props
+    let filtered = assignments.filter(a => a.get('hours') > 0).
+                               sortBy(lastName)
+    return (<div>
       <Row>
         <Col md={2}>Instructor:</Col>
         {filtered.map((assign,name) => {
-           let instructorRank = rankClass(assign.get('instructorRank'),-1)
+           let instructorRank = rankClass(assign.get('instructorRank'),
+                                          config.default_instructor_rank)
            return (<Col md={3} key={name}>
-             <span className={instructorRank}>
-               {capitalize(instructorRank)} fit
-             </span>
+          <span className={instructorRank+" pref-area"}>
+            {capitalize(instructorRank)} fit
+          </span>
            </Col>)
-         })}
+         }).toList()}
       </Row>
       <Row>
         <Col md={2}>TA:</Col>
         {filtered.map((assign,name) => {
-           let studentRank = rankClass(assign.get('studentRank'),0)
+           let studentRank = rankClass(assign.get('studentRank'),
+                                       config.default_student_srank)
            return (<Col md={3} key={name}>
-        <span className={studentRank}>
-          {capitalize(studentRank)} fit
-        </span>
+          <span className={studentRank+" pref-area"}>
+            {capitalize(studentRank)} fit
+          </span>
            </Col>)
-         })}
+         }).toList()}
       </Row>
-  </div>)
+    </div>)
+  }
 }
+const AssignPreferences = connect(state => {
+  return {
+    config: state.config
+  }
+})(_AssignPreferences)
 
 class _AssignButton extends Component{
   static propTypes = {
@@ -419,20 +424,33 @@ const AssignButton = connect(state => {
   }
 })(_AssignButton)
 
+function assignFit(assignments,assign_mode,config){
+  if(assign_mode.mode !== STANDARD){
+    let srank = assignments.getIn([assign_mode.id,'studentRank'],
+                                  config.default_student_srank)
+    let irank = assignments.getIn([assign_mode.id,'instructorRank'],
+                                  config.default_instructor_rank)
+    return rankClass(combineRanks(srank,irank,assign_mode.fit_type,config))
+  }
+}
 
 class _Course extends Component{
   static propTypes = {
     course: PropTypes.instanceOf(Map).isRequired,
     assignments: PropTypes.instanceOf(Map).isRequired,
     students: PropTypes.instanceOf(Map).isRequired,
-    assign_mode: PropTypes.object.isRequired
+    assign_mode: PropTypes.object.isRequired,
+    config: PropTypes.object.isRequired
   }
   render(){
-    let {course,students,assignments,assign_mode} = this.props
+    let {course,students,assignments,assign_mode,config} = this.props
     let assigned = assignmentHours(assignments)
     let unfocused = (assign_mode.mode === COURSE &&
                      assign_mode.id !== course.get('cid'))
     let completed = assigned >= course.getIn(['hours','total'])
+
+    let courseFit = (assign_mode.mode !== STUDENT ? '' :
+                     assignFit(assignments,assign_mode,config))
 
     return (<div className={(unfocused ? "unfocused" : "")}>
         <CloseButton course={course} disabled={unfocused}/>
@@ -458,7 +476,7 @@ class _Course extends Component{
             </div>
           </Col>
         </Row>
-        <Well>
+        <Well className={courseFit}>
           <Row>
             <Col md={2}>
               <AssignButton course={course}
@@ -477,6 +495,7 @@ class _Course extends Component{
 export default connect(state => {
   return {
     ...subkeys(state.document,['students']),
-    assign_mode: state.assign_mode
+    assign_mode: state.assign_mode,
+    config: state.config
   }
 })(_Course)

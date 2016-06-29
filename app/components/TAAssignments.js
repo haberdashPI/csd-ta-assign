@@ -5,10 +5,14 @@ import {connect} from 'react-redux';
 
 import Students from './Students'
 import Instructors from './Instructors'
+import InfoBadge from './InfoBadge'
 
 export default class TAAssignments extends Component {
   render() {
     return (<div>
+      {/* Small informational header */}
+      <InfoBadge/>
+
       {/* The instructors */}
       <div style={{
         position: "fixed",

@@ -64,39 +64,47 @@
 	display: inline;
 }
 
-.terrible{
+.pref-area{
+	border: 1px solid;
+	border-radius: 3px;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	display: inline;
+}
+
+.terrible.pref-area{
 	text-weight: bold;
 }
 
 .terrible,.poor{
 	background: lighten(@brand-warning,20%);
-	border: 1px solid;
-	border-radius: 3px;
 	border-color: @brand-warning;
-	padding-left: 0.5em;
-	padding-right: 0.5em;
-	display: inline;
 }
 
-.okay{
+.okay.pref-area{
 	background: rgba(255,255,255,0);
-	border: 1px solid;
-	border-radius: 3px;
 	border-color: rgba(255,255,255,0);
-	padding-left: 0.5em;
-	padding-right: 0.5em;
-	display: inline;
 }
 
 .good,.excellent{
 	background: lighten(@brand-success,20%);
-	border: 1px solid;
-	border-radius: 3px;
 	border-color: @brand-success;
-	padding-left: 0.5em;
-	padding-right: 0.5em;
-	display: inline;
 }
-.excellent{
+.excellent.pref-area{
 	font-weight: bold;
+}
+
+.infobadge{
+	border-bottom: 1.5px solid @gray;
+	border-right: 1.5px solid @gray;
+	border-left: 1.5px solid @gray;
+	border-bottom-left-radius: 0.5em;
+	border-bottom-right-radius: 0.5em;
+	background: @gray-lighter;
+	left: 10vw;
+	position: fixed;
+	height: 7.5vh;
+	width: 80vw;
+	z-index: 100000;
+	padding: 0.5em;
 }

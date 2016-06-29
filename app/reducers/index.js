@@ -6,7 +6,7 @@ import config from './config'
 export default function root(state = {},action){
   return {
     document: assignments(state.document,action),
-    assign_mode: assign_mode(state.assign_mode,action,state.document),
+    assign_mode: assign_mode(state.assign_mode,action,state),
     config: config(state.config,action)
   }
 }

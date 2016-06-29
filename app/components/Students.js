@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from 'react';
-import {Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
+import {Well, Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
@@ -8,7 +8,8 @@ import DoubleMap from '../util/DoubleMap'
 import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT,
         COURSE, STANDARD, ASSIGN, ASSIGN_MODE} from '../reducers/commands'
 import {findcid, subkeys, assignmentHours,
-        lastName, courseOrder_} from '../util/assignment';
+        lastName, courseOrder_, rankClass,
+        combineRanks} from '../util/assignment';
 
 class _CloseButton extends Component{
   static propTypes = {
@@ -253,55 +254,74 @@ const Assignments = connect(state => {
   }
 })(_Assignments)
 
+function assignFit(assignments,assign_mode,config){
+  if(assign_mode.mode !== STANDARD){
+    let srank = assignments.getIn([assignments.id,'studentRank'],
+                                  config.default_student_srank)
+    let irank = assignments.getIn([assignments.id,'instructorRank'],
+                                  config.default_instructor_rank)
+    return rankClass(combineRanks(srank,irank,assign_mode.fit_type,config))
+  }
+}
+
 class _Student extends Component{
   static propTypes = {
     name: PropTypes.string.isRequired,
     assignments: PropTypes.instanceOf(Map).isRequired,
     student: PropTypes.instanceOf(Map).isRequired,
-    assign_mode: PropTypes.object.isRequired
+    assign_mode: PropTypes.object.isRequired,
+    config: PropTypes.object.isRequired
   }
   render(){
-    let {name,assignments,student,assign_mode} = this.props
+    let {name,assignments,student,assign_mode,config} = this.props
     let assigned = assignmentHours(assignments)
     let unfocused = (assign_mode.mode === STUDENT &&
                      assign_mode.id !== name)
     let completed = assigned >= student.get('total_hours')
 
+    let courseFit = (assign_mode.mode !== COURSE ? '' :
+                     assignFit(assignments,assign_mode,config))
+
     return (
       <div className={(unfocused ? "unfocused" : "")}>
-        <Row>
-          <Col md={2}>
-            <CloseButton disabled={unfocused} name={name}/>
-            <StudentName disabled={unfocused} name={name}/>
-          </Col>
-          <Col md={2}>
-            <AssignButton name={name} student={student}
-                          assignments={assignments}
-                          disabled={unfocused || completed}/>
-          </Col>
-          <Col md={2}>
-            <div className={(completed ? "completed" : "uncompleted")}>
-              {assigned} hours/week of
-              <StudentHours name={name} student={student}
-                            disabled={unfocused}/>
-            </div>
-          </Col>
-        </Row>
-        <Row>
-          <Assignments assignments={assignments} name={name}
-                       disabled={unfocused}/>
-        </Row>
-        <Row>
-          <Col md={8}>
-            <StudentComments name={name} student={student}
-                             disabled={unfocused}/>
-          </Col>
-        </Row>
+        <Well className={courseFit}>
+          <Row>
+            <Col md={2}>
+              <CloseButton disabled={unfocused} name={name}/>
+              <StudentName disabled={unfocused} name={name}/>
+            </Col>
+            <Col md={2}>
+              <AssignButton name={name} student={student}
+                            assignments={assignments}
+                            disabled={unfocused || completed}/>
+            </Col>
+            <Col md={2}>
+              <div className={(completed ? "completed" : "uncompleted")}>
+                {assigned} hours/week of
+                <StudentHours name={name} student={student}
+                              disabled={unfocused}/>
+              </div>
+            </Col>
+          </Row>
+          <Row>
+            <Assignments assignments={assignments} name={name}
+                         disabled={unfocused}/>
+          </Row>
+          <Row>
+            <Col md={8}>
+              <StudentComments name={name} student={student}
+                               disabled={unfocused}/>
+            </Col>
+          </Row>
+        </Well>
       </div>)
   }
 }
 const Student = connect(state => {
-  return {assign_mode: state.assign_mode}
+  return {
+    assign_mode: state.assign_mode,
+    config: state.config
+  }
 })(_Student)
 
 

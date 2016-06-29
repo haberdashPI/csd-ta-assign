@@ -14,12 +14,13 @@ function willCompleteHours(state,action,document){
   }
 }
 
-export default function assign_mode(state = {mode: STANDARD},action,document){
+export default function assign_mode(state = {mode: STANDARD},action,parent){
   switch(action.type){
-    case ASSIGN_MODE: return {mode: action.mode, id: action.id}
+    case ASSIGN_MODE: return {mode: action.mode, id: action.id,
+                              fit_type: parent.config.default_fit_type}
     case DOCUMENT:
       // if
-      if(action.field == ASSIGN && willCompleteHours(state,action,document))
+      if(action.field == ASSIGN && willCompleteHours(state,action,parent.document))
         return {mode: STANDARD}
 
       // if we change the student name, update the assignment state
@@ -41,7 +42,7 @@ export default function assign_mode(state = {mode: STANDARD},action,document){
           return {mode: STANDARD}
       }else if(state.mode === COURSE && action.field == INSTRUCTOR){
         if(action.command === REMOVE &&
-           action.id === document.getIn(['courses',state.id,'instructor']))
+           action.id === parent.document.getIn(['courses',state.id,'instructor']))
           return {mode: STANDARD}
       }
       return state

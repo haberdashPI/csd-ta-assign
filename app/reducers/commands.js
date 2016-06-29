@@ -11,3 +11,5 @@ export const DOCUMENT = 'DOCUMENT'
 
 export const ASSIGN_MODE = 'ASSIGN_MODE'
 export const STANDARD = 'STANDARD'
+
+export const OVERALL_FIT = 'OVERALL_FIT'
