@@ -1,5 +1,6 @@
 import React, {Component, PropTypes} from 'react';
-import {Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
+import ReactDOM from 'react-dom';
+import {Checkbox, Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
@@ -9,11 +10,13 @@ import Course from './Course'
 import DoubleMap from '../util/DoubleMap'
 
 import {DOCUMENT, REMOVE, ADD, CHANGE, INSTRUCTOR,
-        COURSE} from '../reducers/commands'
+        STUDENT, COURSE, STATIC, LAST_NAME, CONFIG,
+        STANDARD} from '../reducers/commands'
 import {NEW_INSTRUCTOR_NAME} from '../reducers/instructor'
 
 import {findcid, subkeys, assignmentHours, lastName,
-        courseOrder_} from '../util/assignment';
+        courseOrder,combineRanks,
+        combineRanksContinuous} from '../util/assignment';
 
 class _Instructor extends Component{
   static propTypes = {
@@ -21,6 +24,7 @@ class _Instructor extends Component{
     instructor: PropTypes.instanceOf(Map).isRequired,
     courses: PropTypes.instanceOf(Map).isRequired,
     assignments: PropTypes.instanceOf(DoubleMap).isRequired,
+    assign_mode: PropTypes.object.isRequired,
 
     onRemove: PropTypes.func.isRequired,
     onAdd: PropTypes.func.isRequired,
@@ -65,7 +69,7 @@ class _Instructor extends Component{
           </Col>
         </Row>
         {cids.
-         sortBy(courseOrder_(courses)).
+         sortBy(c => courseOrder(c,courses)).
          map(cid => {
            let course = courses.get(cid)
            return (<Course key={cid} course={course}
@@ -91,8 +95,14 @@ const Instructor = connect(state => {
 },dispatch => {
   return {
     onRemove: instructor => {
-      dispatch({type: DOCUMENT, command: REMOVE, field: INSTRUCTOR,
-                id: instructor})
+      dispatch({
+        type: DOCUMENT,
+        command: REMOVE,
+        field: INSTRUCTOR,
+        id: instructor,
+        confirm: `Are you sure you want to delete ${instructor} and
+                  all their courses?`
+      })
     },
     onRename: (instructor,to) => {
       dispatch({type: DOCUMENT, command: CHANGE, field: INSTRUCTOR,
@@ -108,32 +118,115 @@ const Instructor = connect(state => {
   }
 })(_Instructor)
 
-class Instructors extends Component {
+function courseOrderFn(assignments,assign_mode,config){
+  return cid => {
+    let assign = assignments.get(assign_mode.id,cid)
+    let srank, irank
+    if(assign){
+      srank = assign.get('studentRank',config.default_student_rank)
+      irank = assign.get('instructorRank',config.default_instructor_rank)
+    }else{
+      srank = config.default_student_rank
+      irank = config.default_instructor_rank
+    }
+    return -combineRanksContinuous(srank,irank,assign_mode.orderby,config)
+  }
+}
+
+function instructorOrderFn(assignments,assign_mode,config){
+  return (instructor,name) =>
+    Math.min(...(instructor.get('courses') || List()).
+              map(courseOrderFn(assignments,assign_mode,config)).toList())
+}
+
+function fullyAssignedFn(courses,assignments){
+  return instructor => {
+    let cids = instructor.get('courses')
+    return (cids || List()).every(cid =>
+      assignmentHours(assignments.get(null,cid)) >=
+        courses.getIn([cid,'hours','total']))
+  }
+}
+
+export class Instructors extends Component {
   static propTypes = {
     instructors: PropTypes.instanceOf(Map).isRequired,
-    onAdd: PropTypes.func.isRequired
+    courses: PropTypes.instanceOf(Map).isRequired,
+    assignments: PropTypes.instanceOf(DoubleMap).isRequired,
+    assign_mode: PropTypes.object.isRequired,
+    config: PropTypes.object.isRequired,
+
+    onAdd: PropTypes.func.isRequired,
+    onHideCompleted: PropTypes.func.isRequired
+  }
+
+  constructor(props){
+    super(props)
+    this.state = {scrollToTop: false}
+  }
+
+  componentWillReceiveProps(nextProps){
+    // respond to an order change by starting from the top
+    // of the list of instructors
+    if(nextProps.assign_mode.mode === STUDENT &&
+       (this.props.assign_mode.mode === STANDARD ||
+        nextProps.assign_mode.orderby !== this.props.assign_mode.orderby)){
+      this.setState({scrollToTop: true})
+    }
+  }
+  componentDidUpdate(){
+    if(this.state.scrollToTop) ReactDOM.findDOMNode(this).scrollIntoView()
   }
 
   render(){
-    let {instructors} = this.props
+    let {instructors,courses,assignments,assign_mode,config,onAdd,
+         onHideCompleted} = this.props
+
+    let order = lastName
+    if(assign_mode.mode === STUDENT){
+      if(assign_mode.orderby !== LAST_NAME)
+        order = instructorOrderFn(assignments,assign_mode,config)
+    }
+
+    let filtered = (!config.hide_completed_instructors ? instructors :
+                    instructors.filterNot(fullyAssignedFn(courses,assignments)))
+
+
     return (<Grid>
-      <h3>Instructors{' '}
-        <Button inline onClick={this.props.onAdd}>
-          <Glyphicon glyph="plus"/>
-        </Button>
-      </h3>
-      {instructors.sortBy(lastName).map((instructor,name) =>
+      <div>
+        <div style={{float: "right"}}>
+          <Checkbox checked={(config.hide_completed_instructors || false)}
+                    onClick={(e) =>
+                      onHideCompleted(!config.hide_completed_instructors)}>
+            Hide instructors with no unassigned hours.
+          </Checkbox>
+        </div>
+        <h3>Instructors{' '}
+          <Button inline onClick={onAdd}>
+            <Glyphicon glyph="plus"/>
+          </Button>
+        </h3>
+      </div>
+      {filtered.sortBy(order).map((instructor,name) =>
         <Instructor key={name} name={name} instructor={instructor}/>).toList()}
     </Grid>)
   }
 }
 
 export default connect(state => {
-  return subkeys(state.document,['instructors'])
+  return {
+    ...subkeys(state.document,['instructors','assignments','courses']),
+    assign_mode: state.assign_mode,
+    config: state.config
+  }
 },dispatch => {
   return {
     onAdd: () => {
       dispatch({type: DOCUMENT, command: ADD, field: INSTRUCTOR})
-    }
+    },
+    onHideCompleted: hide => dispatch({
+      type: CONFIG,
+      to: {hide_completed_instructors: hide}
+    })
   }
 })(Instructors)

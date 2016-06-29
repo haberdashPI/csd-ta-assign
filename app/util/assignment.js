@@ -20,9 +20,9 @@ export function lastName(v,name){
 }
 
 export var quarter_order = {'fall': 0, 'winter': 1, 'spring': 2}
-export function courseOrder_(courses){
-  return cid => quarter_order[courses.getIn([cid,'quarter'])] + "_"
-              courses.getIn([cid,'name'])
+export function courseOrder(cid,courses){
+  return quarter_order[courses.getIn([cid,'quarter'])] + "_" +
+         courses.getIn([cid,'name'])
 }
 
 export function findcid(course){
@@ -49,7 +49,8 @@ export function rankClass(n,def){
 
 export function combineRanks(srank,irank,fit_type,config){
   if(fit_type === OVERALL_FIT){
-    let mean = (srank*config.student_weight + irank*config.instructor_weight)/2
+    let mean = ((srank*config.student_weight + irank*config.instructor_weight) /
+      (config.student_weight + config.instructor_weight))
     if(srank + irank < 0 && srank <= 0 && irank <= 0){
       return (mean <= -1 ? -2 : -1)
     }else if(srank + irank > 0 && srank >= 0 && irank >= 0){
@@ -60,6 +61,19 @@ export function combineRanks(srank,irank,fit_type,config){
       else
         return Math.floor(mean)
     }
+  }else if(fit_type === STUDENT){
+    return srank
+  }else if(fit_type === COURSE){
+    return irank
+  }else{
+    throw "Unexpected fit_type: "+fit_type
+  }
+}
+
+export function combineRanksContinuous(srank,irank,fit_type,config){
+  if(fit_type === OVERALL_FIT){
+    return ((srank*config.student_weight + irank*config.instructor_weight) /
+      (config.student_weight + config.instructor_weight))
   }else if(fit_type === STUDENT){
     return srank
   }else if(fit_type === COURSE){

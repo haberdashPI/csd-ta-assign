@@ -14,12 +14,13 @@ import {findcid, assignmentHours, lastName,
         combineRanks} from '../util/assignment';
 
 
-// TODO: in assign mode show the preferences for each potential assignment
-//       (the user should be able to specify wether it's a combination
-//        or one of TA and instructor preference)
-// TODO: allow sorting by overall preference, TA and instructor preference
-//       (when doing this sorting, move unavailable courses to bottom of
-//        sort order)
+// TODO: show an indication of overall quarter load, and
+// show the preference for this quarter load
+
+// TODO: display preference for additional hours, and
+// allow such TAs to get additional hours (but show a special color for compelted)
+
+// TODO: implement undo and redo
 
 function intRange(str){
   if(str % 1 == 0) return true
@@ -55,7 +56,13 @@ class _CloseButton extends Component{
 const CloseButton = connect(state => {return {}},dispatch => {
   return {
     onRemove: cid => {
-      dispatch({type: DOCUMENT, field: COURSE, command: REMOVE, id: cid})
+      dispatch({
+        type: DOCUMENT,
+        field: COURSE,
+        command: REMOVE,
+        id: cid,
+        confirm: "Are you sure you want to delete this course?"
+      })
     },
   }
 })(_CloseButton)
@@ -135,8 +142,8 @@ class _CourseQuarter extends Component{
       <strong>
         <Selectable onChange={to => this.props.onChange(course.get('cid'),to)}
                     disabled={disabled}
-                    options={['fall','winter','spring']}>
-          {course.get('quarter')}
+                    value={course.get('quarter')}>
+          {['fall','winter','spring']}
         </Selectable>
       </strong>)
   }
@@ -430,7 +437,7 @@ function assignFit(assignments,assign_mode,config){
                                   config.default_student_srank)
     let irank = assignments.getIn([assign_mode.id,'instructorRank'],
                                   config.default_instructor_rank)
-    return rankClass(combineRanks(srank,irank,assign_mode.fit_type,config))
+    return rankClass(combineRanks(srank,irank,assign_mode.colorby,config))
   }
 }
 

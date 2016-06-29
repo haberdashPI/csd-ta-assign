@@ -1,5 +1,6 @@
 import {ASSIGN_MODE, DOCUMENT, STANDARD, STUDENT,
-        COURSE, REMOVE, CHANGE, ASSIGN, INSTRUCTOR} from './commands'
+        COURSE, REMOVE, CHANGE, ASSIGN, INSTRUCTOR,
+        ORDERBY, COLORBY, ASSIGN_DISPLAY} from './commands'
 import {assignmentHours} from '../util/assignment'
 
 function willCompleteHours(state,action,document){
@@ -16,8 +17,16 @@ function willCompleteHours(state,action,document){
 
 export default function assign_mode(state = {mode: STANDARD},action,parent){
   switch(action.type){
-    case ASSIGN_MODE: return {mode: action.mode, id: action.id,
-                              fit_type: parent.config.default_fit_type}
+    case ASSIGN_MODE: return {
+      mode: action.mode,
+      id: action.id,
+      colorby: parent.config.default_colorby[action.mode],
+      orderby: parent.config.default_orderby[action.mode]
+    }
+    case ASSIGN_DISPLAY: switch(action.field){
+      case ORDERBY: return {...state, orderby: action.value}
+      case COLORBY: return {...state, colorby: action.value}
+    }
     case DOCUMENT:
       // if
       if(action.field == ASSIGN && willCompleteHours(state,action,parent.document))

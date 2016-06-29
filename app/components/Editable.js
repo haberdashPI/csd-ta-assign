@@ -1,5 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import {findDOMNode} from 'react-dom';
+import _ from 'underscore'
 
 import {Autosize} from 'react-input-enhancements'
 
@@ -153,39 +154,25 @@ function showDropdown(selectComponent){
 export class Selectable extends Component{
   constructor(props){
     super(props)
-    this.state = {editing: false}
   }
 
-  startEditing(){
-    this.setState({editing: true},() => showDropdown(this._select))
-  }
-
-  finishEditing(value){
-    this.setState({editing: false})
-    if(value !== this.props.value) this.props.onChange(value)
-  }
-
-  cancelEditing(){
-    this.setState({editing: false})
-    this.props.onCancel()
+  onChange(value){
+    this.props.onChange(value)
   }
 
   render(){
-    if(!this.state.editing){
-      return (<div className="editable_field"
-                   onClick={() => (this.props.disabled ? null :
-                                   setTimeout(this.startEditing(),250))}>
-        {this.props.children}
-      </div>)
-    }else{
-      return (<select className="editable_input"
-                      autoFocus={this.props.selectedByDefault}
-                      value={this.props.children}
-                      ref={c => this._select = c}
-                      onChange={e => this.finishEditing(e.target.value)}
-                      onBlur={() => this.finishEditing()}>
-        {this.props.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-      </select>)
+    let options = this.props.children
+    if(options instanceof Array){
+      options = {}
+      for(let x of this.props.children) options[x] = x
     }
+
+    return (<select className="editable_input"
+                    {...this.props}
+                    onChange={e => this.onChange(e.target.value)
+                      /*this.props.onChange(e.target.value)*/}>
+        {_.values(_.mapObject(options,(label,value) =>
+          <option key={value} value={value}>{label}</option>))}
+    </select>)
   }
 }
