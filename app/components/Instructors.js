@@ -142,12 +142,15 @@ function instructorOrderFn(assignments,assign_mode,config){
               map(courseOrderFn(assignments,assign_mode,config)).toList())
 }
 
+function assignedFn(courses,assignments){
+  return cid => assignmentHours(assignments.get(null,cid)) >=
+    courses.getIn([cid,'hours','total'])
+}
+
 function fullyAssignedFn(courses,assignments){
   return instructor => {
     let cids = instructor.get('courses')
-    return (cids || List()).every(cid =>
-      assignmentHours(assignments.get(null,cid)) >=
-        courses.getIn([cid,'hours','total']))
+    return (cids || List()).every(assignedFn(courses,assignments))
   }
 }
 
@@ -188,11 +191,11 @@ export class Instructors extends Component {
     let {instructors,courses,assignments,assign_mode,config,onAdd,
          onHideCompleted} = this.props
 
-    let filtered = (!config.hide_completed_instructors ? instructors :
-                    instructors.filterNot(fullyAssignedFn(courses,assignments)))
-
     let courseList
     if(this.state.detail){
+      let filtered = (!config.hide_completed_instructors ? instructors :
+                      instructors.filterNot(fullyAssignedFn(courses,assignments)))
+
       let order = lastName
       if(assign_mode.mode === STUDENT){
         if(assign_mode.orderby !== LAST_NAME)
@@ -203,6 +206,10 @@ export class Instructors extends Component {
         <Instructor key={name} name={name} instructor={instructor}
                     detail={this.state.detail}/>).toList()
     }else{
+      let filtered = (!config.hide_completed_instructors ? courses :
+                      courses.filterNot((c,cid) =>
+                        assignedFn(courses,assignments)(cid)))
+
       let order = (c,cid) => courseOrder(cid,courses)
       if(assign_mode.mode === STUDENT){
         if(assign_mode.orderby !== LAST_NAME)
@@ -210,13 +217,13 @@ export class Instructors extends Component {
       }
 
       courseList =
-        courses.sortBy(order).
-                map((course,cid) => {
-                  return (<Course key={cid} course={course}
-                                  detail={false}
-                                  assignments={assignments.get(null,cid)}/>)
-                }).
-                toList()
+        filtered.sortBy(order).
+                  map((course,cid) => {
+                    return (<Course key={cid} course={course}
+                                    detail={false}
+                                    assignments={assignments.get(null,cid)}/>)
+                  }).
+                  toList()
     }
 
     return (<Grid>
