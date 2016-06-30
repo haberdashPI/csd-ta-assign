@@ -35,14 +35,15 @@ app.on('ready', () => {
   });
 
   mainWindow.on('close',(e)=> {
-    if (fastQuit ||
+    if (!fastQuit &&
         electron.dialog.showMessageBox(mainWindow,{
           type: "warning",
           buttons: ['Yes','No'],
           title: "Really Quit?",
           message: 'This document has unsaved changes '+
                     'Are you sure you want to quit?',
-        }) == 0){
+        }) == 1){
+      // don't quit...
       e.preventDefault()
     }
   })
