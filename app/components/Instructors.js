@@ -1,6 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {Checkbox, Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
+import {Checkbox, ButtonGroup, Button, Glyphicon, Grid,
+        Row, Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
@@ -73,7 +74,7 @@ class _Instructor extends Component{
          sortBy(c => courseOrder(c,courses)).
          map(cid => {
            let course = courses.get(cid)
-           return (<Course key={cid} course={course}
+           return (<Course key={cid} course={course} detail={true}
                            assignments={assignments.get(null,cid)}/>)
          })}
         <Row><Col md={4}><p><strong>Comments</strong></p></Col></Row>
@@ -122,7 +123,8 @@ const Instructor = connect(state => {
 function courseOrderFn(assignments,assign_mode,config){
   return cid => {
     let assign = assignments.get(assign_mode.id,cid)
-    let srank, irank
+    let srank
+    let irank
     if(assign){
       srank = assign.get('studentRank',config.default_student_rank)
       irank = assign.get('instructorRank',config.default_instructor_rank)
@@ -163,7 +165,7 @@ export class Instructors extends Component {
 
   constructor(props){
     super(props)
-    this.state = {scrollToTop: false}
+    this.state = {scrollToTop: false,detail: true}
   }
 
   componentWillReceiveProps(nextProps){
@@ -186,15 +188,36 @@ export class Instructors extends Component {
     let {instructors,courses,assignments,assign_mode,config,onAdd,
          onHideCompleted} = this.props
 
-    let order = lastName
-    if(assign_mode.mode === STUDENT){
-      if(assign_mode.orderby !== LAST_NAME)
-        order = instructorOrderFn(assignments,assign_mode,config)
-    }
-
     let filtered = (!config.hide_completed_instructors ? instructors :
                     instructors.filterNot(fullyAssignedFn(courses,assignments)))
 
+    let courseList
+    if(this.state.detail){
+      let order = lastName
+      if(assign_mode.mode === STUDENT){
+        if(assign_mode.orderby !== LAST_NAME)
+          order = instructorOrderFn(assignments,assign_mode,config)
+      }
+
+      courseList = filtered.sortBy(order).map((instructor,name) =>
+        <Instructor key={name} name={name} instructor={instructor}
+                    detail={this.state.detail}/>).toList()
+    }else{
+      let order = (c,cid) => courseOrder(cid,courses)
+      if(assign_mode.mode === STUDENT){
+        if(assign_mode.orderby !== LAST_NAME)
+          order = (c,cid) => courseOrderFn(assignments,assign_mode,config)(cid)
+      }
+
+      courseList =
+        courses.sortBy(order).
+                map((course,cid) => {
+                  return (<Course key={cid} course={course}
+                                  detail={false}
+                                  assignments={assignments.get(null,cid)}/>)
+                }).
+                toList()
+    }
 
     return (<Grid>
       <div>
@@ -202,17 +225,26 @@ export class Instructors extends Component {
           <Checkbox checked={(config.hide_completed_instructors || false)}
                     onClick={(e) =>
                       onHideCompleted(!config.hide_completed_instructors)}>
-            Hide instructors with no unassigned hours.
+            Hide items with no unassigned hours.
           </Checkbox>
         </div>
-        <h3>Instructors{' '}
+        <h3>Instructors and Courses{' '}
           <Button inline onClick={onAdd}>
             <Glyphicon glyph="plus"/>
-          </Button>
+          </Button>{' '}
+          <ButtonGroup inline>
+            <Button onClick={() => this.setState({detail: true})}
+                    active={this.state.detail}>
+              Detail
+            </Button>
+            <Button onClick={() => this.setState({detail: false})}
+                    active={!this.state.detail}>
+              Summary
+            </Button>
+          </ButtonGroup>
         </h3>
       </div>
-      {filtered.sortBy(order).map((instructor,name) =>
-        <Instructor key={name} name={name} instructor={instructor}/>).toList()}
+      {courseList}
     </Grid>)
   }
 }

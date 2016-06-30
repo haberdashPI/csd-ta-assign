@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {Checkbox, Well, Button, Glyphicon, Grid, Row,
+import {Checkbox, Well, ButtonGroup, Button, Glyphicon, Grid, Row,
         Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
@@ -9,11 +9,13 @@ import {EditableArea,Editable,Selectable} from './Editable'
 import DoubleMap from '../util/DoubleMap'
 import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT,
         COURSE, STANDARD, ASSIGN, ASSIGN_MODE,
-        LAST_NAME, CONFIG, COHORT} from '../reducers/commands'
+        LAST_NAME, CONFIG, COHORT, OVERALL_FIT} from '../reducers/commands'
 import {findcid, assignmentHours,
         lastNameAndCohort, courseOrder, rankClass,
         combineRanks, combineRanksContinuous} from '../util/assignment';
 import {documentKeys} from '../reducers/document'
+
+// TOOD: implement summarization view
 
 class _CloseButton extends Component{
   static propTypes = {
@@ -23,7 +25,11 @@ class _CloseButton extends Component{
   }
   render(){
     let {name,onRemove,disabled} = this.props
-    return (<div style={{float: "right"}}>
+    return (<div style={{
+      position: "relative",
+      right: 0,
+      padding: "0.5em",
+      zIndex: 1}}>
       <Glyphicon glyph="remove" className="close"
                  style={{fontSize: "1em"}}
                  onClick={() => (disabled ? null : onRemove(name))}/>
@@ -301,32 +307,41 @@ class _AssignButton extends Component{
   }
   render(){
     let {name,assign_mode,config,student,disabled,courses} = this.props
+    let text
 
     if(assign_mode.mode === STANDARD){
+      text = "Course"
       return (<Button bsSize="xsmall"
                       disabled={disabled}
                       onClick={to => this.props.onAssignCourse(name)}>
-        <Glyphicon glyph="plus"/>Course
+        <Glyphicon glyph="plus"/>{(this.props.detail ? text : "")}
       </Button>)
     }
     else if(assign_mode.mode === COURSE){
+      text = (<span>
+        Add {config.hour_unit} hours to
+        {' '}{courses.getIn([String(assign_mode.id),'number'])}
+        {' ('}{courses.getIn([String(assign_mode.id),'quarter'])}{')'}
+      </span>)
       return (<Button bsSize="xsmall" bsStyle="primary"
                       disabled={disabled}
                       onClick={to => {
                           this.props.onAssign(name,assign_mode.id,
-                                              config.hour_unit)
-                        }}>
-        Add {config.hour_unit} hours to
-        {' '}{courses.getIn([String(assign_mode.id),'number'])}
-        {' ('}{courses.getIn([String(assign_mode.id),'quarter'])}{')'}
+                                              config.hour_unit)}}>
+        <Glyphicon glyph="plus"/>{(this.props.detail ? text : "")}
       </Button>)
-    }else if(assign_mode.mode === STUDENT){
+    }else if(assign_mode.mode === STUDENT && assign_mode.id == name){
+      text = "Done"
       return (<Button bsSize="xsmall"
                       disabled={disabled}
-                      onClick={to => this.props.onAssignCourse(null)}
-                      disabled={assign_mode.id !== name}>
-        {(assign_mode.id === name ? "Done" :
-          <span><Glyphicon glyph="plus"/>Course</span>)}
+                      onClick={to => this.props.onAssignCourse(null)}>
+        <span><Glyphicon glyph="ok"/>{(this.props.detail ? text : "")}</span>
+      </Button>)
+    }else if(assign_mode.mode === STUDENT && assign_mode.id != name){
+      text = "Course"
+      return (<Button bsSize="xsmall"
+               disabled={true}>
+        <Glyphicon glyph="plus"/>{(this.props.detail ? text : "")}
       </Button>)
     }
   }
@@ -376,20 +391,25 @@ class _Assignments extends Component{
     let {name,assignments,courses,config,disabled,onUnassign} = this.props
     return (<div>
         {assignments.
-           filter(course => course.get('hours')).
-         sortBy((c,cid) => courseOrder(cid,courses)).
-         map((assign,cid) =>
-           <Col md={2} key={cid}><p>
-             {courses.getIn([cid,'number'])} - {courses.getIn([cid,'quarter'])}
-             {' '}({assign.get('hours')} hrs/wk)
-             <Button bsSize="xsmall"
-                     disabled={disabled}
-                     onClick={to => onUnassign(name,cid,
-                                               config.hour_unit)}>
-               <Glyphicon glyph="minus"/>
-             </Button>
-           </p></Col>).
-         toList()}
+         filter(course => course.get('hours')).
+           sortBy((c,cid) => courseOrder(cid,courses)).
+           map((assign,cid) => {
+             let fit = assignFit(assignments,{id: cid, colorby: OVERALL_FIT},
+                                 config)
+
+             return (<Col md={2} key={cid}><p className={fit}>
+               {courses.getIn([cid,'number'])} - {courses.getIn([cid,'quarter'])}
+               {' '}({assign.get('hours')}
+               {(this.props.detail ? " hrs/wk" : "")})
+               <Button bsSize="xsmall"
+                       disabled={disabled}
+                       onClick={to => onUnassign(name,cid,
+                                                 config.hour_unit)}>
+                 <Glyphicon glyph="minus"/>
+               </Button>
+             </p></Col>)
+           }).
+           toList()}
     </div>)
   }
 }
@@ -441,52 +461,83 @@ class _Student extends Component{
     let courseFit = (assign_mode.mode !== COURSE ? '' :
                      assignFit(assignments,assign_mode,config))
 
-    return (
-      <div className={(unfocused ? "unfocused" : "")}>
-        <Well className={courseFit}>
+    if(!this.props.detail){
+      return (
+        <div className={(unfocused ? "unfocused" : "") + " " +
+                        courseFit}>
           <Row>
-            <CloseButton disabled={unfocused} name={name}/>
             <Col md={2}>
               <StudentName disabled={unfocused} name={name}/>
             </Col>
-            <Col md={1}>
+            <Col md={2}>
+              <div className={(completed ? "completed" : "uncompleted")}>
+                {assigned} of
+                <StudentHours name={name} student={student}
+                              disabled={unfocused}/>
+              </div>
               <AssignButton name={name} student={student}
+                            detail={this.props.detail}
                             assignments={assignments}
                             disabled={unfocused ||
                                       (completed &&
                                        !student.get('allow_more_hours'))}/>
             </Col>
-            <Col md={2}>
-              <div className={(completed ? "completed" : "uncompleted")}>
-                {assigned} hours/week of
-                <StudentHours name={name} student={student}
-                              disabled={unfocused}/>
-              </div>
-              <StudentAllowMore name={name} student={student}
-                                disabled={unfocused}/>
-            </Col>
-            <Col md={3}>
-              <StudentQuarterLoad name={name} student={student}
-                                  assignments={assignments}
-                                  disabled={unfocused}/>
-            </Col>
-            <Col md={1}>
-              <StudentCohort name={name} student={student}
-                             disabled={unfocused}/>
-            </Col>
-          </Row>
-          <Row>
             <Assignments assignments={assignments} name={name}
+                         detail={this.props.detail}
                          disabled={unfocused}/>
           </Row>
-          <Row>
-            <Col md={8}>
-              <StudentComments name={name} student={student}
+        </div>)
+    }
+    else{
+      return (
+        <div className={(unfocused ? "unfocused" : "")}>
+          <Well className={courseFit}>
+            <CloseButton disabled={unfocused} name={name}/>
+            <Row>
+              <Col md={2}>
+                <StudentName disabled={unfocused} name={name}/>
+              </Col>
+              <Col md={1}>
+                <AssignButton name={name} student={student}
+                              detail={this.props.detail}
+                              assignments={assignments}
+                              disabled={unfocused ||
+                                        (completed &&
+                                         !student.get('allow_more_hours'))}/>
+              </Col>
+              <Col md={2}>
+                <div className={(completed ? "completed" : "uncompleted")}>
+                  {assigned} hours/week of
+                  <StudentHours name={name} student={student}
+                                disabled={unfocused}/>
+                </div>
+                <StudentAllowMore name={name} student={student}
+                                  disabled={unfocused}/>
+              </Col>
+              <Col md={3}>
+                <StudentQuarterLoad name={name} student={student}
+                                    assignments={assignments}
+                                    disabled={unfocused}/>
+              </Col>
+              <Col md={1}>
+                <StudentCohort name={name} student={student}
                                disabled={unfocused}/>
-            </Col>
-          </Row>
-        </Well>
-      </div>)
+              </Col>
+            </Row>
+            <Row>
+              <Assignments assignments={assignments} name={name}
+                           detail={this.props.detail}
+                           disabled={unfocused}/>
+            </Row>
+            <Row>
+              <Col md={8}>
+                <StudentComments name={name} student={student}
+                                 disabled={unfocused}/>
+              </Col>
+            </Row>
+          </Well>
+        </div>)
+    }
   }
 }
 const Student = connect(state => {
@@ -500,8 +551,15 @@ const Student = connect(state => {
 function studentOrderFn(assignments,assign_mode,config){
   return (student,name) => {
     let assign = assignments.get(name,assign_mode.id)
-    let srank = assign.get('studentRank',config.default_student_rank)
-    let irank = assign.get('instructorRank',config.default_instructor_rank)
+    let srank
+    let irank
+    if(assign){
+      srank = assign.get('studentRank',config.default_student_rank)
+      irank = assign.get('instructorRank',config.default_instructor_rank)
+    }else{
+      irank = config.default_instructor_rank
+      srank = config.default_student_rank
+    }
     return -combineRanksContinuous(srank,irank,assign_mode.orderby,config)
   }
 }
@@ -528,7 +586,7 @@ class Students extends Component {
 
   constructor(props){
     super(props)
-    this.state = {scrollToTop: false}
+    this.state = {scrollToTop: false, detail: true}
   }
 
   componentWillReceiveProps(nextProps){
@@ -570,11 +628,21 @@ class Students extends Component {
             TAs{' '}
             <Button inline onClick={this.props.onAdd}>
               <Glyphicon glyph="plus"/>
-            </Button>
+            </Button>{' '}
+            <ButtonGroup inline>
+              <Button onClick={() => this.setState({detail: true})}
+                      active={this.state.detail}>
+                Detail
+              </Button>
+              <Button onClick={() => this.setState({detail: false})}
+                      active={!this.state.detail}>
+                Summary
+              </Button>
+            </ButtonGroup>
           </h3>
         </div>
         {filtered.sortBy(order).map((student,name) =>
-          <Student key={name} name={name}
+          <Student key={name} name={name} detail={this.state.detail}
                    assignments={assignments.get(name,null)}
                    student={student}/>).toList()}
     </Grid>)

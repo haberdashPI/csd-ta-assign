@@ -136,7 +136,9 @@ class _CourseQuarter extends Component{
         <Selectable onChange={to => this.props.onChange(course.get('cid'),to)}
                     disabled={disabled}
                     value={course.get('quarter')}>
-          {['fall','winter','spring']}
+          {(this.props.detail ?
+            ['fall','winter','spring'] :
+            {'fall': 'F', 'winter': 'W', 'spring': 'S'})}
         </Selectable>
       </strong>)
   }
@@ -273,18 +275,24 @@ class _Assignments extends Component{
     let {assignments,course,onUnassign,disabled,config} = this.props
     let filtered = assignments.filter(a => a.get('hours') > 0).
                                sortBy(lastName)
+
     return (<div>
-      {filtered.map((assign,name) =>
-        <Col md={3} key={name}>
-          <p>{name} ({assign.get('hours')} hours)
-            <Button bsSize="xsmall"
-                    disabled={disabled}
-                    onClick={to => onUnassign(name,course.get('cid'),
-                                              config.hour_unit)}>
-              <Glyphicon glyph="minus"/>
-            </Button>
-          </p>
-        </Col>).toList()}
+      {filtered.map((assign,name) => {
+         let fit = assignFit(assignments,{id: name, colorby: OVERALL_FIT},
+                             config)
+
+         return (<Col md={(this.props.detail ? 3 : 2)} key={name}>
+           <p className={fit}>{(this.props.detail ? name : lastName(null,name))}
+             ({assign.get('hours')} hours)
+             <Button bsSize="xsmall"
+                     disabled={disabled}
+                     onClick={to => onUnassign(name,course.get('cid'),
+                                               config.hour_unit)}>
+               <Glyphicon glyph="minus"/>
+             </Button>
+           </p>
+         </Col>)
+       }).toList()}
     </div>)
   }
 }
@@ -371,7 +379,7 @@ class _AssignButton extends Component{
         <Button bsSize="xsmall"
                 disabled={disabled}
                 onClick={to => this.props.onAssignTA(course.get('cid'))}>
-          <Glyphicon glyph="plus"/>TA
+          <Glyphicon glyph="plus"/>{(!this.props.detail ? '' : "TA")}
         </Button>)
     }else if(assign_mode.mode === STUDENT){
       return (<Button bsSize="xsmall" bsStyle="primary"
@@ -380,15 +388,19 @@ class _AssignButton extends Component{
                           this.props.onAssign(assign_mode.id,course.get('cid'),
                                               config.hour_unit)
                         }}>
-          Add {config.hour_unit} for {assign_mode.id}
+          <Glyphicon glyph="plus"/>
+        {(!this.props.detail ? '' :
+            <span>Add {config.hour_unit} for {assign_mode.id}</span>)}
       </Button>)
-    }else if(assign_mode.mode === COURSE){
-      return (<Button bsSize="xsmall"
-                      disabled={disabled}
-                      onClick={to => this.props.onAssignTA(null)}
-                      disabled={assign_mode.id !== course.get('cid')}>
-        {(assign_mode.id === course.get('cid') ? "Done" :
-          <span><Glyphicon glyph="plus"/>TA</span>)}
+    }else if(assign_mode.mode === COURSE && assign_mode.id === course.get('cid')){
+      return (<Button bsSize="xsmall" disabled={false}
+                      onClick={to => this.props.onAssignTA(null)}>
+        <Glyphicon glyph="ok"/>
+          {(!this.props.detail ? '' : "Done")}
+      </Button>)
+    }else if(assign_mode.mode === COURSE && assign_mode.id !== course.get('cid')){
+      return (<Button bsSize="xsmall" disabled={true}>
+        <Glyphicon glyph="plus"/>{(!this.props.detail ? '' : "TA")}
       </Button>)
     }
   }
@@ -452,7 +464,31 @@ class _Course extends Component{
     let courseFit = (assign_mode.mode !== STUDENT ? '' :
                      assignFit(assignments,assign_mode,config))
 
-    return (<div className={(unfocused ? "unfocused" : "")}>
+    if(!this.props.detail){
+      return (<div className={(unfocused ? "unfocused" : "") + " "+
+                              courseFit}>
+        <Row>
+          <Col md={2}>
+            <CourseNumber course={course} disabled={unfocused}/>{' '}
+            <CourseQuarter course={course} disabled={unfocused}
+                           detail={false}/>
+          </Col>
+          <Col md={2}>
+            <div className={(completed ? "completed" : "uncompleted")}>
+              {assigned} of
+              <CourseHours course={course} disabled={unfocused}/>
+              {' '}
+              (<CourseNumTAs course={course} disabled={unfocused}/>)
+            </div>
+            <AssignButton course={course} detail={false}
+                          disabled={unfocused || completed}/>
+          </Col>
+          <Assignments assignments={assignments} disabled={unfocused}
+                       course={course} detail={false}/>
+        </Row>
+      </div>)
+    }else{
+      return (<div className={(unfocused ? "unfocused" : "")}>
         <CloseButton course={course} disabled={unfocused}/>
         <Row>
           <Col md={3}>
@@ -479,16 +515,17 @@ class _Course extends Component{
         <Well className={courseFit}>
           <Row>
             <Col md={2}>
-              <AssignButton course={course}
+              <AssignButton course={course} detail={true}
                             disabled={unfocused || completed}/>
             </Col>
             <Assignments assignments={assignments} disabled={unfocused}
-                         course={course}/>
+                         course={course} detail={false}/>
           </Row>
           <AssignPreferences assignments={assignments}
                              course={course}/>
         </Well>
-    </div>)
+      </div>)
+    }
   }
 }
 
