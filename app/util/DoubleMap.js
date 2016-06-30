@@ -119,13 +119,15 @@ export default class DoubleMap{
     else if(a){
       return new DoubleMap(this.val.withMutations(v => {
         v.deleteIn([0,a])
-        v.deleteIn([1,b,a])
+        v.update(1,bs => bs.map(b => b.delete(a)))
+        return v
       }),true)
     }
     else if(b){
       return new DoubleMap(this.val.withMutations(v => {
+        v.update(0,as => as.map(a => a.delete(b)))
         v.deleteIn([1,b])
-        v.deleteIn([0,a,b])
+        return v
       }),true)
     }
     else{
