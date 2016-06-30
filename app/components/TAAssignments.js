@@ -2,43 +2,57 @@ import React, {Component, PropTypes} from 'react';
 import {Map, List} from 'immutable'
 import {Grid, Row, Col, Panel} from 'react-bootstrap'
 import {connect} from 'react-redux';
+import SplitPane from 'react-split-pane'
 
 import Students from './Students'
 import Instructors from './Instructors'
 import InfoBadge from './InfoBadge'
 
 export default class TAAssignments extends Component {
+  constructor(props){
+    super(props)
+    this.state = {splitHeight: 300}
+    this.handleResize = this.handleResize.bind(this)
+  }
+
+  componentDidMount(){
+    window.addEventListener('resize',this.handleResize)
+  }
+
+  componentWillUnmount(){
+    window.removeEventListener('resize',this.handleResize)
+  }
+
+  handleResize(){
+    this.forceUpdate()
+  }
+
   render() {
     return (<div>
       {/* Small informational header */}
       <InfoBadge/>
 
-      {/* The instructors */}
-      <div style={{
-        position: "fixed",
-        top: 0, left: 0,
-        width: "100vw",
-        height: "65vh",
-        overflow: "scroll",
-        padding: "1em"
-      }}>
-        <Instructors/>
-      </div>
+      <SplitPane split="horizontal" minSize={100}
+                 defaultSize={this.state.splitHeight}
+                 onChange={size => this.setState({splitHeight: size})}>
+        <div style={{
+          overflow: "scroll",
+          padding: "1em",
+          width: "100vw"
+        }}>
+          <Instructors/>
+        </div>
 
-      {/* The TAs */}
-      <div style={{
-        position: "fixed",
-        bottom: 0, left: 0,
-        width: "100vw",
-        height: "35vh",
-        overflow: "scroll",
-        background: "rgb(255,255,255)",
-        borderTopStyle: "solid",
-        borderTopWidth: "1px",
-        padding: "1em"
-      }}>
-        <Students/>
-      </div>
+        <div style={{
+          overflow: "scroll",
+          padding: "1em",
+          borderTop: "4px double",
+          height: window.innerHeight - this.state.splitHeight,
+          background: "rgb(255,255,255)"
+        }}>
+          <Students/>
+        </div>
+      </SplitPane>
     </div>)
   }
 }
