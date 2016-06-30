@@ -6,11 +6,11 @@ import {connect} from "react-redux"
 import {STUDENT,COURSE,STANDARD,ASSIGN_MODE,
         ASSIGN_DISPLAY, ORDERBY, COLORBY,
         OVERALL_FIT, LAST_NAME, CONFIG} from "../reducers/commands"
-import {subkeys} from "../util/assignment"
+import {documentKeys} from '../reducers/document'
 import {Selectable} from "./Editable"
 
-// TODO: ask the user if they would like to change the default fit type
-// if it's changed form the default.
+// TODO: ask user if they want to change defaults when the
+// badge closes automatically (becuase the hours have been completed)
 
 class _InfoBadge extends Component{
   static propTypes = {
@@ -87,7 +87,7 @@ class _InfoBadge extends Component{
 }
 export default connect(state => {
   return {
-    ...subkeys(state.document,["courses"]),
+    ...documentKeys(state,["courses"]),
     assign_mode: state.assign_mode,
     config: state.config
   }

@@ -10,17 +10,10 @@ import {DOCUMENT, REMOVE, ADD, CHANGE, COURSE,
         OVERALL_FIT} from '../reducers/commands'
 
 import {findcid, assignmentHours, lastName,
-        courseOrder_, subkeys, rankClass,
+        courseOrder_, rankClass,
         combineRanks} from '../util/assignment';
 
-
-// TODO: show an indication of overall quarter load, and
-// show the preference for this quarter load
-
-// TODO: display preference for additional hours, and
-// allow such TAs to get additional hours (but show a special color for compelted)
-
-// TODO: implement undo and redo
+import {documentKeys} from '../reducers/document';
 
 function intRange(str){
   if(str % 1 == 0) return true
@@ -501,7 +494,7 @@ class _Course extends Component{
 
 export default connect(state => {
   return {
-    ...subkeys(state.document,['students']),
+    ...documentKeys(state,['students']),
     assign_mode: state.assign_mode,
     config: state.config
   }

@@ -6,12 +6,6 @@ export function assignmentHours(assignments){
     total + (a.get('hours') ? a.get('hours') : 0),0)
 }
 
-export function subkeys(map,keys){
-  let result = {}
-  for(let key of keys) result[key] = map.get(key)
-    return result
-}
-
 export function lastName(v,name){
   if(name == NEW_TA_NAME)
     return "AAA"

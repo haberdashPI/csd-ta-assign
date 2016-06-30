@@ -1,5 +1,6 @@
 import _ from 'underscore'
 import {fromJS, Map, List, Set} from 'immutable'
+import undoable, {combineFilters,distinctState,includeAction} from 'redux-undo'
 
 import courses_csv from '../data/courses.json'
 import students_csv from '../data/students.csv'
@@ -14,7 +15,8 @@ import assign from './assign'
 
 import {quarter_order} from '../util/assignment'
 
-import {STUDENT, INSTRUCTOR, COURSE, ASSIGN} from './commands'
+import {STUDENT, INSTRUCTOR, COURSE, ASSIGN, DOCUMENT,
+        FILE_LOAD, FILE_SAVED, FILE_CLEAR} from './commands'
 
 ////////////////////////////////////////////////////////////////////////////////
 // construction
@@ -39,10 +41,13 @@ function organizeStudents(data){
       students[entry.name] = {}
 
     if(entry.type == "ranking"){
-      ranks = ranks.set(entry.name,strID_to_cid(entry.value),Number(entry.argument1))
+      ranks = ranks.set(entry.name,strID_to_cid(entry.value),
+                        Number(entry.argument1))
     }else if(entry.type == "background"){
       arrayadd(students[entry.name],'background')
       students[entry.name].background.push(entry.argument1)
+    }else if(entry.type == "allow_more_hours"){
+      students[entry.name].allow_more_hours = entry.value === "yes"
     }else if(entry.type == "conflict"){
       arrayadd(students[entry.name],'conflict')
       students[entry.name].conflict.push({
@@ -66,7 +71,8 @@ function organizeInstructors(data){
       instructors[entry.name] = {}
 
     if(entry.type == "ranking"){
-      ranks.set(entry.argument1,strID_to_cid(entry.value),Number(entry.argument2))
+      ranks.set(entry.argument1,strID_to_cid(entry.value),
+                Number(entry.argument2))
     }else{
       instructors[entry.name][entry.type] = entry.value
     }
@@ -106,7 +112,7 @@ function organizeCourses(data){
   }
 }
 
-function createInitialState(){
+function createInitialState(timestamp){
   let {courses,coursesByInstructor} = organizeCourses(courses_csv)
   let {students,studentRanks} = organizeStudents(students_csv)
   let {instructors,instructorRanks} = organizeInstructors(instructors_csv)
@@ -115,30 +121,114 @@ function createInitialState(){
     coursesByInstructor.forEach((v,k) => instructors.setIn([k,'courses'],v))
   })
 
-  return Map({
-    instructors: instructors,
-    courses: courses,
-    students: students,
-    assignments: DoubleMap.combineValues({
-      studentRank: studentRanks,
-      instructorRank: instructorRanks
+  return {
+    timestamp: timestamp || Date.now(),
+    data: Map({
+      instructors: instructors,
+      courses: courses,
+      students: students,
+      assignments: DoubleMap.combineValues({
+        studentRank: studentRanks,
+        instructorRank: instructorRanks
+      })
     })
+  }
+}
+
+export function docFromJSON(data){
+  return Map({
+    instructors: fromJS(data.instructors).map(i =>
+      i.update('courses',Set(),x => x.toSet())),
+    courses: fromJS(data.courses),
+    students: fromJS(data.students),
+    assignments: new DoubleMap(fromJS(data.assignments),true)
   })
+}
+
+export function docToJSON(doc){
+  return {
+    instructors: doc.get('instructors').toJS(),
+    courses: doc.get('courses').toJS(),
+    students: doc.get('students').toJS(),
+    assignments: doc.get('assignments').val.toJS()
+  }
+}
+
+export function isClean(state){
+  return state.lastStored &&
+         (!state.undo || state.lastStored === state.undo.present.timestamp)
+}
+
+export function documentKeys(state,keys){
+  let data = documentData(state)
+  let result = {}
+  for(let key of keys) result[key] = data.get(key)
+  return result
+}
+
+export function documentData(state){
+  return state.document.undo.present.data
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // reducers
 
-export const DOCUMENT = 'DOCUMENT'
-export default function assignment(state = createInitialState(), action){
+function dataReducer(state = createInitialState(),action){
   switch(action.type){
     case DOCUMENT:
+      let result = state.data
+      let timestamp = Date.now()
       switch(action.field){
-        case STUDENT: return student(state,action)
-        case INSTRUCTOR: return instructor(state,action)
-        case COURSE: return course(state,action)
-        case ASSIGN: return assign(state,action)
+        case STUDENT: result = student(state.data,action); break
+        case INSTRUCTOR: result = instructor(state.data,action); break
+        case COURSE: result = course(state.data,action); break
+        case ASSIGN: result = assign(state.data,action); break
+        default: timestamp = state.timestamp
       }
+      return {data: result, timestamp: timestamp}
     default: return state
+  }
+}
+
+const undoReducer = undoable(dataReducer,{
+  filter: includeAction(DOCUMENT)
+})
+
+export default function document(state = {},action){
+  let time
+  switch(action.type){
+    case FILE_LOAD:
+      time = Date.now()
+      return {
+        lastStored: time,
+        undo: {
+          past: [],
+          present: {data: action.data, timestamp: time},
+          future: []
+        }
+      }
+    case FILE_SAVED:
+      time = Date.now()
+      return {
+        lastStored: time,
+        undo: {
+          ...state.undo,
+          present: {...state.undo.present, timestamp: time}
+        }
+      }
+    case FILE_CLEAR:
+      time = Date.now()
+      return {
+        lastStored: time,
+        undo: {
+          past: [],
+          present: createInitialState(time),
+          future: []
+        }
+      }
+    default: return {
+      lastStored: state.lastStored,
+      undo: undoReducer(state.undo,action)
+    }
   }
 }

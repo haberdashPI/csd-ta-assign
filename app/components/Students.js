@@ -10,9 +10,10 @@ import DoubleMap from '../util/DoubleMap'
 import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT,
         COURSE, STANDARD, ASSIGN, ASSIGN_MODE,
         LAST_NAME, CONFIG} from '../reducers/commands'
-import {findcid, subkeys, assignmentHours,
+import {findcid, assignmentHours,
         lastName, courseOrder, rankClass,
         combineRanks, combineRanksContinuous} from '../util/assignment';
+import {documentKeys} from '../reducers/document'
 
 class _CloseButton extends Component{
   static propTypes = {
@@ -78,7 +79,7 @@ class _StudentHours extends Component{
     student: PropTypes.instanceOf(Map).isRequired,
     config: PropTypes.object.isRequired,
     onChange: PropTypes.func.isRequired,
-    disabled: PropTypes.bool.isRequired,
+    disabled: PropTypes.bool.isRequired
   }
   render(){
     let {name,student,config,onChange,disabled} = this.props
@@ -103,9 +104,37 @@ const StudentHours = connect(state => {
         id: student,
         to: to
       })
-    }
+    },
   }
 })(_StudentHours)
+
+class _StudentAllowMore extends Component{
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    student: PropTypes.instanceOf(Map).isRequired,
+    onChange: PropTypes.func.isRequired,
+    disabled: PropTypes.bool.isRequired
+  }
+  render(){
+    let {name,student,onChange,disabled} = this.props
+    return (<Checkbox checked={student.get('allow_more_hours')}
+                      disabled={disabled}
+                      onChange={(e) =>
+                        onChange(name,!student.get('allow_more_hours'))}>
+      allow more hours
+    </Checkbox>)
+  }
+}
+const StudentAllowMore = connect(state => {return {}},dispatch => {
+  return {
+    onChange: (student,to) => dispatch({
+      type: DOCUMENT,
+      command: CHANGE,
+      field: STUDENT, subfield: ['allow_more_hours'],
+      id: student, to: to
+    })
+  }
+})(_StudentAllowMore)
 
 class _StudentComments extends Component{
   static propTypes = {
@@ -136,6 +165,76 @@ const StudentComments = connect(state => {return {}},dispatch => {
     }
   }
 })(_StudentComments)
+
+function quarterIsFn(quarter,courses){
+  return (assign,cid) => courses.getIn([cid,'quarter']) === quarter
+}
+
+function quarterLoadMatches(name,courses,assignments,order){
+  let f =
+    assignmentHours(assignments.filter(quarterIsFn('fall',courses)))
+  let w =
+    assignmentHours(assignments.filter(quarterIsFn('winter',courses)))
+  let s =
+    assignmentHours(assignments.filter(quarterIsFn('spring',courses)))
+  switch(order){
+    case 0: return true
+    case 1: return f >= w && w >= s
+    case 2: return f >= s && s >= w
+    case 3: return w >= f && f >= s
+    case 4: return w >= s && s >= f
+    case 5: return s >= f && f >= w
+    case 6: return s >= w && w >= f
+  }
+}
+
+class _StudentQuarterLoad extends Component{
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    student: PropTypes.instanceOf(Map).isRequired,
+    disabled: PropTypes.bool.isRequired,
+    assignments: PropTypes.instanceOf(Map),
+    courses: PropTypes.instanceOf(Map),
+
+    onChange: PropTypes.func.isRequired
+  }
+  render(){
+    let {name,student,assignments,courses,onChange,disabled} = this.props
+    let order = Number(student.get('quarter_load',0))
+    let match = quarterLoadMatches(name,courses,assignments,order)
+    return (<span>
+        <span className={(match ? 'completed' : 'uncompleted')}>
+          <em>Quarter Load </em>
+        </span>
+        <Selectable onChange={to => this.props.onChange(name,to)}
+                    disabled={disabled}
+                    value={String(order)}>
+          {{"0": 'any',
+            "1": "F > W > S",
+            "2": "F > S > W",
+            "3": "W > F > S",
+            "4": "W > S > F",
+            "5": "S > F > W",
+            "6": "S > W > F"}}
+        </Selectable>
+    </span>)
+  }
+}
+const StudentQuarterLoad = connect(state => {
+  return documentKeys(state,['courses'])
+},dispatch => {
+  return {
+    onChange: (student,to) => {
+      dispatch({
+        type: DOCUMENT,
+        command: CHANGE,
+        field: STUDENT, subfield: ['quarter_load'],
+        id: student,
+        to: Number(to)
+      })
+    }
+  }
+})(_StudentQuarterLoad)
 
 class _AssignButton extends Component{
   static propTypes = {
@@ -183,7 +282,7 @@ class _AssignButton extends Component{
 }
 const AssignButton = connect(state => {
   return {
-    ...subkeys(state.document,['courses']),
+    ...documentKeys(state,['courses']),
     assign_mode: state.assign_mode,
     config: state.config
   }
@@ -231,7 +330,7 @@ class _Assignments extends Component{
          map((assign,cid) =>
            <Col md={2} key={cid}><p>
              {courses.getIn([cid,'number'])} - {courses.getIn([cid,'quarter'])}
-             {' '}({assign.get('hours')} hours/week)
+             {' '}({assign.get('hours')} hrs/wk)
              <Button bsSize="xsmall"
                      disabled={disabled}
                      onClick={to => onUnassign(name,cid,
@@ -245,7 +344,7 @@ class _Assignments extends Component{
 }
 const Assignments = connect(state => {
   return {
-    ...subkeys(state.document,['courses']),
+    ...documentKeys(state,['courses']),
     config: state.config
   }
 },dispatch => {
@@ -302,7 +401,9 @@ class _Student extends Component{
             <Col md={2}>
               <AssignButton name={name} student={student}
                             assignments={assignments}
-                            disabled={unfocused || completed}/>
+                            disabled={unfocused ||
+                                      (completed &&
+                                       !student.get('allow_more_hours'))}/>
             </Col>
             <Col md={2}>
               <div className={(completed ? "completed" : "uncompleted")}>
@@ -310,6 +411,13 @@ class _Student extends Component{
                 <StudentHours name={name} student={student}
                               disabled={unfocused}/>
               </div>
+              <StudentAllowMore name={name} student={student}
+                                disabled={unfocused}/>
+            </Col>
+            <Col md={3}>
+              <StudentQuarterLoad name={name} student={student}
+                                  assignments={assignments}
+                                  disabled={unfocused}/>
             </Col>
           </Row>
           <Row>
@@ -419,7 +527,7 @@ class Students extends Component {
 }
 export default connect(state => {
   return {
-    ...subkeys(state.document,['assignments','students','courses']),
+    ...documentKeys(state,['assignments','students','courses']),
     assign_mode: state.assign_mode,
     config: state.config
   }

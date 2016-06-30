@@ -8,5 +8,6 @@ export default function assign(state,action){
       return state.update('assignments',asg =>
         asg.update(action.student,String(action.course),Map(),x =>
           x.update('hours',0,h => h+action.hours)))
+    default: return state
   }
 }

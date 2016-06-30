@@ -14,9 +14,10 @@ import {DOCUMENT, REMOVE, ADD, CHANGE, INSTRUCTOR,
         STANDARD} from '../reducers/commands'
 import {NEW_INSTRUCTOR_NAME} from '../reducers/instructor'
 
-import {findcid, subkeys, assignmentHours, lastName,
+import {findcid, assignmentHours, lastName,
         courseOrder,combineRanks,
         combineRanksContinuous} from '../util/assignment';
+import {documentKeys} from '../reducers/document'
 
 class _Instructor extends Component{
   static propTypes = {
@@ -89,7 +90,7 @@ class _Instructor extends Component{
 
 const Instructor = connect(state => {
   return {
-    ...subkeys(state.document,['courses','assignments']),
+    ...documentKeys(state,['courses','assignments']),
     assign_mode: state.assign_mode
   }
 },dispatch => {
@@ -175,7 +176,10 @@ export class Instructors extends Component {
     }
   }
   componentDidUpdate(){
-    if(this.state.scrollToTop) ReactDOM.findDOMNode(this).scrollIntoView()
+    if(this.state.scrollToTop){
+      ReactDOM.findDOMNode(this).scrollIntoView()
+      this.setState({scrollToTop: false})
+    }
   }
 
   render(){
@@ -215,7 +219,7 @@ export class Instructors extends Component {
 
 export default connect(state => {
   return {
-    ...subkeys(state.document,['instructors','assignments','courses']),
+    ...documentKeys(state,['instructors','assignments','courses']),
     assign_mode: state.assign_mode,
     config: state.config
   }

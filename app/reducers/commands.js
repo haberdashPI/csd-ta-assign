@@ -19,3 +19,9 @@ export const COLORBY = 'COLORBY'
 
 export const OVERALL_FIT = 'OVERALL_FIT'
 export const LAST_NAME = 'LAST_NAME'
+
+export const FILE_LOAD = 'FILE_LOAD'
+export const FILE_SAVED = 'FILE_SAVED'
+export const FILE_CLEAR = 'FILE_CLEAR'
+
+export const ERROR = 'ERROR'

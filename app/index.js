@@ -4,6 +4,8 @@ import { Provider } from 'react-redux';
 import NotificationSystem from 'react-notification-system';
 
 import TAAssignments from './components/TAAssignments';
+import AppMenuEvents from './components/AppMenuEvents';
+
 import createRootStore from './reducers';
 
 import './index.less'
@@ -14,10 +16,13 @@ const store = createRootStore(notifyPromise)
 
 render(
   <div>
-  <Provider store={store}>
-    <TAAssignments/>
-  </Provider>
-  <NotificationSystem ref={(notifier) => provideNotify(notifier)}/>
+    <Provider store={store}>
+      <div>
+        <AppMenuEvents/>
+        <TAAssignments/>
+      </div>
+    </Provider>
+    <NotificationSystem ref={(notifier) => provideNotify(notifier)}/>
   </div>,
   document.getElementById('root')
 );
