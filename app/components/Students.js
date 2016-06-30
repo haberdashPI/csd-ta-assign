@@ -9,9 +9,9 @@ import {EditableArea,Editable,Selectable} from './Editable'
 import DoubleMap from '../util/DoubleMap'
 import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT,
         COURSE, STANDARD, ASSIGN, ASSIGN_MODE,
-        LAST_NAME, CONFIG} from '../reducers/commands'
+        LAST_NAME, CONFIG, COHORT} from '../reducers/commands'
 import {findcid, assignmentHours,
-        lastName, courseOrder, rankClass,
+        lastNameAndCohort, courseOrder, rankClass,
         combineRanks, combineRanksContinuous} from '../util/assignment';
 import {documentKeys} from '../reducers/document'
 
@@ -83,7 +83,7 @@ class _StudentHours extends Component{
   }
   render(){
     let {name,student,config,onChange,disabled} = this.props
-    return (<Editable onChange={to => onChange(name,to)}
+    return (<Editable onChange={to => onChange(name,student,to)}
                       validate={x => (x % config.hour_unit === 0 && x > 0)}
                       message={"Must be a multiple of "+
                                config.hour_unit+" hours"}
@@ -96,14 +96,24 @@ const StudentHours = connect(state => {
   return {config: state.config}
 },dispatch => {
   return {
-    onChange: (student,to) => {
+    onChange: (name,student,to) => {
       dispatch({
         type: DOCUMENT,
         command: CHANGE,
         field: STUDENT, subfield: ['total_hours'],
-        id: student,
+        id: name,
         to: to
       })
+      if(student.get('cohort')){
+        dispatch({
+          type: DOCUMENT,
+          command: CHANGE,
+          field: COHORT, subfield: ['total_hours'],
+          id: student.get('cohort'),
+          confirm: "Change for all students in this cohort?",
+          to: to
+        })
+      }
     },
   }
 })(_StudentHours)
@@ -235,6 +245,47 @@ const StudentQuarterLoad = connect(state => {
     }
   }
 })(_StudentQuarterLoad)
+
+class _StudentCohort extends Component{
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    student: PropTypes.instanceOf(Map).isRequired,
+    disabled: PropTypes.bool.isRequired,
+
+    onChange: PropTypes.func.isRequired
+  }
+  render(){
+    let {name,student,onChange,disabled} = this.props
+    return (
+      <Selectable onChange={to => this.props.onChange(name,to)}
+                  disabled={disabled}
+                  value={(student.get('cohort') ?
+                          student.get('cohort') : "")}>
+        {{"": 'none',
+          "1": "1st year",
+          "2": "2nd year",
+          "3": "3rd year",
+          "4": "4th year",
+          "5": "5th year",
+          "6": "6th year"}}
+      </Selectable>)
+  }
+}
+const StudentCohort = connect(state => {
+  return documentKeys(state,['courses'])
+},dispatch => {
+  return {
+    onChange: (student,to) => {
+      dispatch({
+        type: DOCUMENT,
+        command: CHANGE,
+        field: STUDENT, subfield: ['cohort'],
+        id: student,
+        to: Number(to)
+      })
+    }
+  }
+})(_StudentCohort)
 
 class _AssignButton extends Component{
   static propTypes = {
@@ -394,11 +445,11 @@ class _Student extends Component{
       <div className={(unfocused ? "unfocused" : "")}>
         <Well className={courseFit}>
           <Row>
+            <CloseButton disabled={unfocused} name={name}/>
             <Col md={2}>
-              <CloseButton disabled={unfocused} name={name}/>
               <StudentName disabled={unfocused} name={name}/>
             </Col>
-            <Col md={2}>
+            <Col md={1}>
               <AssignButton name={name} student={student}
                             assignments={assignments}
                             disabled={unfocused ||
@@ -418,6 +469,10 @@ class _Student extends Component{
               <StudentQuarterLoad name={name} student={student}
                                   assignments={assignments}
                                   disabled={unfocused}/>
+            </Col>
+            <Col md={1}>
+              <StudentCohort name={name} student={student}
+                             disabled={unfocused}/>
             </Col>
           </Row>
           <Row>
@@ -492,7 +547,7 @@ class Students extends Component {
   render(){
     let {assignments,students,courses,assign_mode,config,
          onHideCompleted} = this.props
-    let order = lastName
+    let order = lastNameAndCohort
     if(assign_mode.mode === COURSE){
       if(assign_mode.orderby !== LAST_NAME)
         order = studentOrderFn(assignments,assign_mode,config)

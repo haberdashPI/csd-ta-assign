@@ -5,6 +5,8 @@ import {connect} from 'react-redux';
 import {ActionCreators as UndoActionCreators} from 'redux-undo'
 import {documentData,isClean,docToJSON,docFromJSON} from '../reducers/document'
 
+// TODO: allow loading of student, course and instructor data
+
 // node.js specific modules (all code specific to this program being on the
 // filesystem is in this one file)
 import {ipcRenderer as electron} from 'electron'
@@ -102,7 +104,7 @@ class AppMenuEvents extends Component {
   }
 
   saveFile(filename){
-    let data = docToJSON(this.props.document.present.data)
+    let data = docToJSON(this.props.data)
     fs.writeFile(filename,JSON.stringify(data),err => {
       if(err){
         this.props.dispatch({

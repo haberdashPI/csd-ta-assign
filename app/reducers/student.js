@@ -1,6 +1,6 @@
 import {fromJS, Map, List, Set} from 'immutable'
 import DoubleMap from '../util/DoubleMap'
-import {ADD, REMOVE, CHANGE} from './commands'
+import {ADD, REMOVE, CHANGE, STUDENT, COHORT} from './commands'
 
 export const NEW_TA_NAME = 'New TA'
 
@@ -32,11 +32,21 @@ function changeStudent(state,action){
   }
 }
 
+function changeCohort(state,action){
+  return state.update('students',ss => ss.map(s =>
+    (s.get('cohort') === action.id ? s.setIn(action.subfield,action.to) : s)
+  ))
+}
+
 export default function student(state,action){
   switch(action.command){
     case ADD: return addStudent(state,action)
     case REMOVE: return removeStudent(state,action)
-    case CHANGE: return changeStudent(state,action)
+    case CHANGE:
+      switch(action.field){
+        case STUDENT: return changeStudent(state,action)
+        case COHORT: return changeCohort(state,action)
+      }
     default: return state
   }
 }

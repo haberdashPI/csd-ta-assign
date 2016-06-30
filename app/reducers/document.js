@@ -15,7 +15,7 @@ import assign from './assign'
 
 import {quarter_order} from '../util/assignment'
 
-import {STUDENT, INSTRUCTOR, COURSE, ASSIGN, DOCUMENT,
+import {STUDENT, INSTRUCTOR, COURSE, ASSIGN, COHORT, DOCUMENT,
         FILE_LOAD, FILE_SAVED, FILE_CLEAR} from './commands'
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -180,6 +180,7 @@ function dataReducer(state = createInitialState(),action){
       let timestamp = Date.now()
       switch(action.field){
         case STUDENT: result = student(state.data,action); break
+        case COHORT: result = student(state.data,action); break
         case INSTRUCTOR: result = instructor(state.data,action); break
         case COURSE: result = course(state.data,action); break
         case ASSIGN: result = assign(state.data,action); break

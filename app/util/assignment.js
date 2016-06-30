@@ -13,6 +13,10 @@ export function lastName(v,name){
     return (name.trim().match(/\s+([^\s]+)$/) || [null,name])[1]
 }
 
+export function lastNameAndCohort(v,name){
+  return v.get('cohort') + "_" + lastName(v,name)
+}
+
 export var quarter_order = {'fall': 0, 'winter': 1, 'spring': 2}
 export function courseOrder(cid,courses){
   return quarter_order[courses.getIn([cid,'quarter'])] + "_" +
