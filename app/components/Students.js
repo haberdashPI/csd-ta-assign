@@ -204,6 +204,15 @@ function quarterLoadMatches(name,courses,assignments,order){
   }
 }
 
+const qlstring = {
+  "0": 'any',
+  "1": "FWS",
+  "2": "FSW",
+  "3": "WFS",
+  "4": "WSF",
+  "5": "SFW",
+  "6": "SWF"
+}
 class _StudentQuarterLoad extends Component{
   static propTypes = {
     name: PropTypes.string.isRequired,
@@ -218,9 +227,11 @@ class _StudentQuarterLoad extends Component{
     let {name,student,assignments,courses,onChange,disabled} = this.props
     let order = Number(student.get('quarter_load',0))
     let match = quarterLoadMatches(name,courses,assignments,order)
-    return (<span>
+
+    if(this.props.detail){
+      return (<span>
         <span className={(match ? 'completed' : 'uncompleted')}>
-          <em>Quarter Load </em>
+          <em>"Quarter Load"</em>
         </span>
         <Selectable onChange={to => this.props.onChange(name,to)}
                     disabled={disabled}
@@ -233,7 +244,13 @@ class _StudentQuarterLoad extends Component{
             "5": "S > F > W",
             "6": "S > W > F"}}
         </Selectable>
-    </span>)
+      </span>)
+    }else{
+      return (<span className={(match ? 'completed' : 'uncompleted')}
+                    style={{width: "3em", height: "2em", display: "inline-block"}}>
+        {qlstring[String(order)]}
+      </span>)
+    }
   }
 }
 const StudentQuarterLoad = connect(state => {
@@ -470,20 +487,25 @@ class _Student extends Component{
               <StudentName disabled={unfocused} name={name}/>
             </Col>
             <Col md={2}>
-              <div className={(completed ? "completed" : "uncompleted")}>
+              <div className={(completed ? "completed" : "uncompleted")}
+                   style={{width: "6em", height: "2em", display: "inline-block"}}>
                 {assigned} of
                 <StudentHours name={name} student={student}
                               disabled={unfocused}/>
               </div>
-              <AssignButton name={name} student={student}
-                            detail={this.props.detail}
+              {' '}<StudentQuarterLoad name={name} student={student}
+                                  assignments={assignments}
+                                  disabled={unfocused}
+                                       detail={false}/>
+              {' '}<AssignButton name={name} student={student}
+                            detail={false}
                             assignments={assignments}
                             disabled={unfocused ||
                                       (completed &&
                                        !student.get('allow_more_hours'))}/>
             </Col>
             <Assignments assignments={assignments} name={name}
-                         detail={this.props.detail}
+                         detail={false}
                          disabled={unfocused}/>
           </Row>
         </div>)
@@ -499,14 +521,15 @@ class _Student extends Component{
               </Col>
               <Col md={1}>
                 <AssignButton name={name} student={student}
-                              detail={this.props.detail}
+                              detail={true}
                               assignments={assignments}
                               disabled={unfocused ||
                                         (completed &&
                                          !student.get('allow_more_hours'))}/>
               </Col>
               <Col md={2}>
-                <div className={(completed ? "completed" : "uncompleted")}>
+                <div className={(completed ? "completed" : "uncompleted")}
+                     style={{width: "11em", height: "2em", display: "inline-block"}}>
                   {assigned} hours/week of
                   <StudentHours name={name} student={student}
                                 disabled={unfocused}/>
@@ -517,6 +540,7 @@ class _Student extends Component{
               <Col md={3}>
                 <StudentQuarterLoad name={name} student={student}
                                     assignments={assignments}
+                                    detail={true}
                                     disabled={unfocused}/>
               </Col>
               <Col md={1}>
@@ -526,7 +550,7 @@ class _Student extends Component{
             </Row>
             <Row>
               <Assignments assignments={assignments} name={name}
-                           detail={this.props.detail}
+                           detail={true}
                            disabled={unfocused}/>
             </Row>
             <Row>

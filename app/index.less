@@ -35,8 +35,10 @@
 }
 
 .unfocused{
+	display: none;
+	opacity: 0;
 	-webkit-filter: blur(5px);
-	-webkit-transition: -webkit-filter 250ms;
+	-webkit-transition: -webkit-filter 250ms, display 250ms;
 }
 .focused{
 	border: 1px solid;

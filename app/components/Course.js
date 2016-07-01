@@ -474,7 +474,8 @@ class _Course extends Component{
                            detail={false}/>
           </Col>
           <Col md={2}>
-            <div className={(completed ? "completed" : "uncompleted")}>
+            <div className={(completed ? "completed" : "uncompleted")}
+                 style={{width: "10em", height: "2em", display: "inline-block"}}>
               {assigned} of
               <CourseHours course={course} disabled={unfocused}/>
               {' '}
@@ -503,7 +504,8 @@ class _Course extends Component{
             <CourseEnroll course={course} disabled={unfocused}/>
           </Col>
           <Col md={3}>
-            <div className={(completed ? "completed" : "uncompleted")}>
+            <div className={(completed ? "completed" : "uncompleted")}
+                 style={{width: "12em", height: "2em", display: "inline-block"}}>
               {assigned} of
               <CourseHours course={course} disabled={unfocused}/>
               hours
