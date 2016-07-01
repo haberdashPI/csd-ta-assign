@@ -33,12 +33,13 @@ export default class TAAssignments extends Component {
       <InfoBadge/>
 
       <SplitPane split="horizontal" minSize={100}
-                 defaultSize={this.state.splitHeight}
+                 defaultSize={this.state.splitHeight} primary="second"
                  onChange={size => this.setState({splitHeight: size})}>
         <div style={{
           overflow: "scroll",
           padding: "1em",
-          width: "100vw"
+          borderBottom: "4px double",
+          height: window.innerHeight - this.state.splitHeight,
         }}>
           <Instructors/>
         </div>
@@ -46,9 +47,7 @@ export default class TAAssignments extends Component {
         <div style={{
           overflow: "scroll",
           padding: "1em",
-          borderTop: "4px double",
-          height: window.innerHeight - this.state.splitHeight,
-          background: "rgb(255,255,255)"
+          width: "100vw"
         }}>
           <Students/>
         </div>
