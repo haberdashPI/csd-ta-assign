@@ -9,13 +9,19 @@ export default class DoubleMap{
       if(!obj) obj = Map()
       let a = Map().asMutable()
       let b = Map().asMutable()
-      obj.forEach((v,k) => {
-        a.setIn([k.get(0),k.get(1)],v)
-        b.setIn([k.get(1),k.get(0)])
+      obj.forEach((key2s,k1) => {
+        key2s.forEach((v,k2) => {
+          a.setIn([k1,k2],v)
+          b.setIn([k2,k1],v)
+        })
       })
 
       this.val = List([a.asImmutable(),b.asImmutable()])
     }
+  }
+
+  toJS(){
+    return this.val.get(0).toJS()
   }
 
   static combineValues(obj){

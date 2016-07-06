@@ -45,7 +45,7 @@ function organizeStudents(data){
                         Number(entry.argument1))
     }else if(entry.type == "background"){
       arrayadd(students[entry.name],'background')
-      students[entry.name].background.push(entry.argument1)
+      students[entry.name].background.push(entry.value)
     }else if(entry.type == "allow_more_hours"){
       students[entry.name].allow_more_hours = entry.value === "yes"
     }else if(entry.type == "conflict"){
@@ -141,7 +141,7 @@ export function docFromJSON(data){
       i.update('courses',Set(),x => x.toSet())),
     courses: fromJS(data.courses),
     students: fromJS(data.students),
-    assignments: new DoubleMap(fromJS(data.assignments),true)
+    assignments: new DoubleMap(fromJS(data.assignments))
   })
 }
 
@@ -150,7 +150,7 @@ export function docToJSON(doc){
     instructors: doc.get('instructors').toJS(),
     courses: doc.get('courses').toJS(),
     students: doc.get('students').toJS(),
-    assignments: doc.get('assignments').val.toJS()
+    assignments: doc.get('assignments').toJS()
   }
 }
 
