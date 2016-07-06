@@ -9,7 +9,7 @@ function initialConfig(){
     student_weight: 1,
     instructor_weight: 2,
     default_instructor_rank: 0,
-    default_student_srank: 0,
+    default_student_rank: 0,
   }
 }
 

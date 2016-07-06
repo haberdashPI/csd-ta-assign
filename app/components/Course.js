@@ -344,7 +344,7 @@ class _AssignPreferences extends Component{
         <Col md={2}>TA:</Col>
         {filtered.map((assign,name) => {
            let studentRank = rankClass(assign.get('studentRank'),
-                                       config.default_student_srank)
+                                       config.default_student_rank)
            return (<Col md={3} key={name}>
           <span className={studentRank+" pref-area"}>
             {capitalize(studentRank)} fit
@@ -439,7 +439,7 @@ const AssignButton = connect(state => {
 function assignFit(assignments,assign_mode,config){
   if(assign_mode.mode !== STANDARD){
     let srank = assignments.getIn([assign_mode.id,'studentRank'],
-                                  config.default_student_srank)
+                                  config.default_student_rank)
     let irank = assignments.getIn([assign_mode.id,'instructorRank'],
                                   config.default_instructor_rank)
     return rankClass(combineRanks(srank,irank,assign_mode.colorby,config))
