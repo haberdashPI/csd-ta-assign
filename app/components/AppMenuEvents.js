@@ -104,8 +104,9 @@ class AppMenuEvents extends Component {
   }
 
   saveFile(filename){
+    filename = (fileparse(filename).ext ? filename : filename + ".json")
     let data = docToJSON(this.props.data)
-    fs.writeFile(filename,JSON.stringify(data),err => {
+    fs.writeFile(filename,JSON.stringify(data,null,2),err => {
       if(err){
         this.props.dispatch({
           type: ERROR,
@@ -127,8 +128,5 @@ class AppMenuEvents extends Component {
   }
 }
 export default connect(state => {
-  // NOTE: data is here solely so that this component
-  // updates when the document changes (so the menus and title
-  // can be changed appropriately)
   return {document: state.document, data: documentData(state)}
 })(AppMenuEvents)
