@@ -15,6 +15,8 @@ import {findcid, assignmentHours,
         combineRanks, combineRanksContinuous} from '../util/assignment';
 import {documentKeys} from '../reducers/document'
 
+const FormControlFeedback = FormControl.Feedback
+
 class _CloseButton extends Component{
   static propTypes = {
     name: PropTypes.string.isRequired,
@@ -288,7 +290,7 @@ class _StudentCohort extends Component{
           "3": "3rd year",
           "4": "4th year",
           "5": "5th year",
-          "6": "6th year"}}
+          "6": "6th year+"}}
       </Selectable>)
   }
 }
@@ -451,7 +453,7 @@ const Assignments = connect(state => {
 function assignFit(assignments,assign_mode,config){
   if(assign_mode.mode !== STANDARD){
     let srank = assignments.getIn([assign_mode.id,'studentRank'],
-                                  config.default_student_srank)
+                                  config.default_student_rank)
     let irank = assignments.getIn([assign_mode.id,'instructorRank'],
                                   config.default_instructor_rank)
     return rankClass(combineRanks(srank,irank,assign_mode.colorby,config))
@@ -672,9 +674,9 @@ class Students extends Component {
                          placeholder="Search"
                          onChange={(e) =>
                            this.setState({search: e.target.value})}/>
-            <FormControl.Feedback>
+            <FormControlFeedback>
               <Glyphicon glyph="search"/>
-            </FormControl.Feedback>
+            </FormControlFeedback>
           </FormGroup>
         </div>
         {filtered.sortBy(order).map((student,name) =>

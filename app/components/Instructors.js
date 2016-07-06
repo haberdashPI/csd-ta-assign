@@ -1,7 +1,8 @@
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {FormControl, FormGroup, Checkbox, ButtonGroup, Button, Glyphicon, Grid,
-        Row, Col, Panel} from 'react-bootstrap'
+import {FormControl, FormGroup, Checkbox, ButtonGroup, Button, Glyphicon,
+        Grid, Row, Col, Panel} from 'react-bootstrap'
+
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
@@ -19,6 +20,8 @@ import {findcid, assignmentHours, lastName,
         courseOrder,combineRanks,
         combineRanksContinuous} from '../util/assignment';
 import {documentKeys} from '../reducers/document'
+
+const FormControlFeedback = FormControl.Feedback
 
 class _Instructor extends Component{
   static propTypes = {
@@ -278,9 +281,9 @@ export class Instructors extends Component {
                        placeholder="Search"
                        onChange={(e) =>
                          this.setState({search: e.target.value})}/>
-          <FormControl.Feedback>
+          <FormControlFeedback>
             <Glyphicon glyph="search"/>
-          </FormControl.Feedback>
+          </FormControlFeedback>
         </FormGroup>
       </div>
       {courseList}
