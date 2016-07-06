@@ -235,7 +235,7 @@ class _CourseNumTAs extends Component{
         <Editable onChange={to => this.props.onChange(course.get('cid'),to)}
                   disabled={disabled}
                   validate={x => intRange(x)}>
-          {(hmin == hmax ? hmin : hmin+" - "+ hmax)}
+          {(hmin == hmax ? hmin : hmin+"-"+ hmax)}
         </Editable> {(hmin == 1 && hmax == 1 ? 'TA' : 'TAs')}
     </span>)
   }
