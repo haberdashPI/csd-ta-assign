@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {Checkbox, Well, ButtonGroup, Button, Glyphicon, Grid, Row,
-        Col, Panel} from 'react-bootstrap'
+import {FormGroup, FormControl, Checkbox, Well, ButtonGroup,
+        Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
@@ -14,8 +14,6 @@ import {findcid, assignmentHours,
         lastNameAndCohort, courseOrder, rankClass,
         combineRanks, combineRanksContinuous} from '../util/assignment';
 import {documentKeys} from '../reducers/document'
-
-// TOOD: implement summarization view
 
 class _CloseButton extends Component{
   static propTypes = {
@@ -595,6 +593,10 @@ function fullyAssignedFn(courses,assignments){
   }
 }
 
+function studentMatchesFn(search){
+  return (student,name) => !search || name.match(search)
+}
+
 // TODO: show student's cohort, and order by that and then last name
 // TODO: allow setting hours by cohort
 class Students extends Component {
@@ -637,7 +639,7 @@ class Students extends Component {
 
     let filtered = (!config.hide_completed_students ? students :
                     students.filterNot(fullyAssignedFn(courses,assignments)))
-
+    filtered = filtered.filter(studentMatchesFn(this.state.search))
 
     return (<Grid>
         <div>
@@ -664,6 +666,16 @@ class Students extends Component {
               </Button>
             </ButtonGroup>
           </h3>
+          <FormGroup>
+            <FormControl type="text"
+                         value={(this.state.search ? this.state.search : '')}
+                         placeholder="Search"
+                         onChange={(e) =>
+                           this.setState({search: e.target.value})}/>
+            <FormControl.Feedback>
+              <Glyphicon glyph="search"/>
+            </FormControl.Feedback>
+          </FormGroup>
         </div>
         {filtered.sortBy(order).map((student,name) =>
           <Student key={name} name={name} detail={this.state.detail}

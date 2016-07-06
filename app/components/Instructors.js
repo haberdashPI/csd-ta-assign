@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {Checkbox, ButtonGroup, Button, Glyphicon, Grid,
+import {FormControl, FormGroup, Checkbox, ButtonGroup, Button, Glyphicon, Grid,
         Row, Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
@@ -154,6 +154,25 @@ function fullyAssignedFn(courses,assignments){
   }
 }
 
+function courseMatchesFn(search){
+  return course =>
+    !search || course.get('name').match(search) ||
+          course.get('number').match(search)
+}
+
+function instructorMatchesFn(search,courses){
+  return (instructor,name) => {
+    if(search){
+      if(name.match(search))
+        return true
+
+      let cids = instructor.get('courses')
+      return !cids || cids.map(cid => courses.get(cid)).
+                           some(courseMatchesFn(search))
+    }else return true
+  }
+}
+
 export class Instructors extends Component {
   static propTypes = {
     instructors: PropTypes.instanceOf(Map).isRequired,
@@ -193,8 +212,10 @@ export class Instructors extends Component {
 
     let courseList
     if(this.state.detail){
-      let filtered = (!config.hide_completed_instructors ? instructors :
-                      instructors.filterNot(fullyAssignedFn(courses,assignments)))
+      let filtered =
+        (!config.hide_completed_instructors ? instructors :
+         instructors.filterNot(fullyAssignedFn(courses,assignments)))
+      filtered = filtered.filter(instructorMatchesFn(this.state.search,courses))
 
       let order = lastName
       if(assign_mode.mode === STUDENT){
@@ -206,9 +227,10 @@ export class Instructors extends Component {
         <Instructor key={name} name={name} instructor={instructor}
                     detail={this.state.detail}/>).toList()
     }else{
-      let filtered = (!config.hide_completed_instructors ? courses :
-                      courses.filterNot((c,cid) =>
-                        assignedFn(courses,assignments)(cid)))
+      let filtered =
+        (!config.hide_completed_instructors ? courses :
+         courses.filterNot((c,cid) => assignedFn(courses,assignments)(cid)))
+      filtered = filtered.filter(courseMatchesFn(this.state.search))
 
       let order = (c,cid) => courseOrder(cid,courses)
       if(assign_mode.mode === STUDENT){
@@ -250,6 +272,16 @@ export class Instructors extends Component {
             </Button>
           </ButtonGroup>
         </h3>
+        <FormGroup>
+          <FormControl type="text"
+                       value={(this.state.search ? this.state.search : '')}
+                       placeholder="Search"
+                       onChange={(e) =>
+                         this.setState({search: e.target.value})}/>
+          <FormControl.Feedback>
+            <Glyphicon glyph="search"/>
+          </FormControl.Feedback>
+        </FormGroup>
       </div>
       {courseList}
     </Grid>)
