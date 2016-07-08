@@ -469,20 +469,21 @@ class _Course extends Component{
                               courseFit}>
         <Row>
           <Col md={2}>
+            <AssignButton course={course} detail={false}
+                          disabled={unfocused || completed}/>
             <CourseNumber course={course} disabled={unfocused}/>{' '}
             <CourseQuarter course={course} disabled={unfocused}
                            detail={false}/>
           </Col>
           <Col md={2}>
             <div className={(completed ? "completed" : "uncompleted")}
-                 style={{width: "10em", height: "2em", display: "inline-block"}}>
+                 style={{width: "11.5em", height: "2em",
+                         display: "inline-block"}}>
               {assigned} of
               <CourseHours course={course} disabled={unfocused}/>
               {' '}
               (<CourseNumTAs course={course} disabled={unfocused}/>)
             </div>
-            <AssignButton course={course} detail={false}
-                          disabled={unfocused || completed}/>
           </Col>
           <Assignments assignments={assignments} disabled={unfocused}
                        course={course} detail={false}/>
@@ -505,7 +506,7 @@ class _Course extends Component{
           </Col>
           <Col md={3}>
             <div className={(completed ? "completed" : "uncompleted")}
-                 style={{width: "12em", height: "2em", display: "inline-block"}}>
+                 style={{width: "12.5em", height: "2em", display: "inline-block"}}>
               {assigned} of
               <CourseHours course={course} disabled={unfocused}/>
               hours

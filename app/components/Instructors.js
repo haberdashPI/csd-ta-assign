@@ -159,14 +159,14 @@ function fullyAssignedFn(courses,assignments){
 
 function courseMatchesFn(search){
   return course =>
-    !search || course.get('name').match(search) ||
+    !search || course.get('name').toUpperCase().match(search.toUpperCase()) ||
           course.get('number').match(search)
 }
 
 function instructorMatchesFn(search,courses){
   return (instructor,name) => {
     if(search){
-      if(name.match(search))
+      if(name.toUpperCase().match(search.toUpperCase()))
         return true
 
       let cids = instructor.get('courses')

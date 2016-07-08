@@ -195,8 +195,21 @@ const undoReducer = undoable(dataReducer,{
   filter: includeAction(DOCUMENT)
 })
 
-export default function document(state = {},action){
+export default function document(state = undefined,action){
   let time
+
+  if(state === undefined){
+    time = Date.now()
+    state = {
+      lastStored: time,
+      undo: {
+        past: [],
+        present: createInitialState(time),
+        future: []
+      }
+    }
+  }
+
   switch(action.type){
     case FILE_LOAD:
       time = Date.now()

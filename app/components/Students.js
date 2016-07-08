@@ -108,7 +108,7 @@ const StudentHours = connect(state => {
         command: CHANGE,
         field: STUDENT, subfield: ['total_hours'],
         id: name,
-        to: to
+        to: Number(to)
       })
       if(student.get('cohort')){
         dispatch({
@@ -117,7 +117,7 @@ const StudentHours = connect(state => {
           field: COHORT, subfield: ['total_hours'],
           id: student.get('cohort'),
           confirm: "Change for all students in this cohort?",
-          to: to
+          to: Number(to)
         })
       }
     },
@@ -484,11 +484,18 @@ class _Student extends Component{
                         courseFit}>
           <Row>
             <Col md={2}>
+              <AssignButton name={name} student={student}
+                            detail={false}
+                            assignments={assignments}
+                            disabled={unfocused ||
+                                      (completed &&
+                                       !student.get('allow_more_hours'))}/>
               <StudentName disabled={unfocused} name={name}/>
             </Col>
             <Col md={2}>
               <div className={(completed ? "completed" : "uncompleted")}
-                   style={{width: "6em", height: "2em", display: "inline-block"}}>
+                   style={{width: "6.8em", height: "2em",
+                           display: "inline-block"}}>
                 {assigned} of
                 <StudentHours name={name} student={student}
                               disabled={unfocused}/>
@@ -497,12 +504,6 @@ class _Student extends Component{
                                   assignments={assignments}
                                   disabled={unfocused}
                                        detail={false}/>
-              {' '}<AssignButton name={name} student={student}
-                            detail={false}
-                            assignments={assignments}
-                            disabled={unfocused ||
-                                      (completed &&
-                                       !student.get('allow_more_hours'))}/>
             </Col>
             <Assignments assignments={assignments} name={name}
                          detail={false}
@@ -596,7 +597,8 @@ function fullyAssignedFn(courses,assignments){
 }
 
 function studentMatchesFn(search){
-  return (student,name) => !search || name.match(search)
+  return (student,name) => !search ||
+                         name.toUpperCase().match(search.toUpperCase())
 }
 
 // TODO: show student's cohort, and order by that and then last name
