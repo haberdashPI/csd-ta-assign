@@ -660,7 +660,10 @@ class Students extends Component {
     }
   }
   componentDidUpdate(){
-    if(this.state.scrollToTop) ReactDOM.findDOMNode(this).scrollIntoView()
+    if(this.state.scrollToTop){
+      ReactDOM.findDOMNode(this).scrollIntoView()
+      this.setState({scrollToTop: false})
+    }
   }
 
   render(){
