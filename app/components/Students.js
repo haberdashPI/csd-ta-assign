@@ -317,13 +317,15 @@ class _AssignButton extends Component{
     assign_mode: PropTypes.object.isRequired,
     config: PropTypes.object.isRequired,
     courses: PropTypes.instanceOf(Map).isRequired,
+    assignments: PropTypes.instanceOf(DoubleMap).isRequired,
 
     onAssignCourse: PropTypes.func.isRequired,
     onAssign: PropTypes.func.isRequired,
     disabled: PropTypes.bool.isRequired,
   }
   render(){
-    let {name,assign_mode,config,student,disabled,courses} = this.props
+    let {name,assign_mode,config,student,disabled,courses,
+         assignments} = this.props
     let text
 
     if(assign_mode.mode === STANDARD){
@@ -335,6 +337,7 @@ class _AssignButton extends Component{
       </Button>)
     }
     else if(assign_mode.mode === COURSE){
+      disabled = disabled || assignments.get(name,assign_mode.id).get('fix')
       text = (<span>
         Add {config.hour_unit} hours to
         {' '}{courses.getIn([String(assign_mode.id),'number'])}
@@ -365,7 +368,7 @@ class _AssignButton extends Component{
 }
 const AssignButton = connect(state => {
   return {
-    ...documentKeys(state,['courses']),
+    ...documentKeys(state,['courses','assignments']),
     assign_mode: state.assign_mode,
     config: state.config
   }
@@ -405,7 +408,8 @@ class _Assignments extends Component{
     onUnassign: PropTypes.func.isRequired
   }
   render(){
-    let {name,assignments,courses,config,disabled,onUnassign} = this.props
+    let {name,assignments,courses,config,disabled,onFix,
+         onUnassign} = this.props
     return (<div>
         {assignments.
          filter(course => course.get('hours')).
@@ -414,17 +418,25 @@ class _Assignments extends Component{
              let fit = assignFit(assignments,{id: cid, colorby: OVERALL_FIT},
                                  config)
 
-             return (<Col md={2} key={cid}><p className={fit}>
-               {courses.getIn([cid,'number'])} - {courses.getIn([cid,'quarter'])}
+             return (<Col md={2} key={cid}><div className={fit}>
+               {courses.getIn([cid,'number'])}-{courses.getIn([cid,'quarter'])}
                {' '}({assign.get('hours')}
                {(this.props.detail ? " hrs/wk" : "")})
-               <Button bsSize="xsmall"
-                       disabled={disabled}
-                       onClick={to => onUnassign(name,cid,
-                                                 config.hour_unit)}>
-                 <Glyphicon glyph="minus"/>
-               </Button>
-             </p></Col>)
+               <ButtonGroup>
+                 <Button bsSize="xsmall"
+                         disabled={disabled || assign.get('fix')}
+                         onClick={to => onUnassign(name,cid,
+                                                   config.hour_unit)}>
+                   <Glyphicon glyph="minus"/>
+                 </Button>
+                 <Button bsSize="xsmall" disabled={disabled}
+                         onClick={to => onFix(name,cid,!assign.get('fix'))}
+                         active={assign.get('fix')}>
+                   <Glyphicon glyph="magnet"/>
+                   {(this.props.detail ? " do not change" : "")}
+                 </Button>
+               </ButtonGroup>
+             </div></Col>)
            }).
            toList()}
     </div>)
@@ -443,6 +455,17 @@ const Assignments = connect(state => {
         command: CHANGE,
         field: ASSIGN,
         hours: -unit,
+        student: name,
+        course: cid
+      })
+    },
+    onFix: (name,cid,fix) => {
+      let dummy = 2+1
+      dispatch({
+        type: DOCUMENT,
+        command: CHANGE,
+        field: ASSIGN,
+        fix: fix,
         student: name,
         course: cid
       })

@@ -1,5 +1,6 @@
 import React, {Component, PropTypes} from 'react';
-import {Well, Button, Glyphicon, Grid, Row, Col, Panel} from 'react-bootstrap'
+import {Well, ButtonGroup, Button, Glyphicon, Grid,
+        Row, Col, Panel} from 'react-bootstrap'
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
@@ -272,7 +273,7 @@ class _Assignments extends Component{
     config: PropTypes.object.isRequired
   }
   render(){
-    let {assignments,course,onUnassign,disabled,config} = this.props
+    let {assignments,course,onFix,onUnassign,disabled,config} = this.props
     let filtered = assignments.filter(a => a.get('hours') > 0).
                                sortBy(lastName)
 
@@ -284,12 +285,22 @@ class _Assignments extends Component{
          return (<Col md={(this.props.detail ? 3 : 2)} key={name}>
            <p className={fit}>{(this.props.detail ? name : lastName(null,name))}
              ({assign.get('hours')} hours)
-             <Button bsSize="xsmall"
-                     disabled={disabled}
-                     onClick={to => onUnassign(name,course.get('cid'),
-                                               config.hour_unit)}>
-               <Glyphicon glyph="minus"/>
-             </Button>
+             <ButtonGroup>
+               <Button bsSize="xsmall"
+                       disabled={disabled || assign.get('fix')}
+                       onClick={to => onUnassign(name,course.get('cid'),
+                                                 config.hour_unit)}>
+                 <Glyphicon glyph="minus"/>
+               </Button>
+               <Button bsSize="xsmall" disabled={disabled}
+                       onClick={to => onFix(name,course.get('cid'),
+                                            !assign.get('fix'))}
+                       active={assign.get('fix')}>
+                 <Glyphicon glyph="magnet"/>
+                 {(this.props.detail ? " do not change" : "")}
+               </Button>
+             </ButtonGroup>
+
            </p>
          </Col>)
        }).toList()}
@@ -309,7 +320,15 @@ const Assignments = connect(state => {
         student: name,
         course: cid
       })
-    }
+    },
+    onFix: (name,cid,fix) => dispatch({
+      type: DOCUMENT,
+      command: CHANGE,
+      field: ASSIGN,
+      fix: fix,
+      student: name,
+      course: cid
+    })
   }
 })(_Assignments)
 
@@ -522,7 +541,7 @@ class _Course extends Component{
                             disabled={unfocused || completed}/>
             </Col>
             <Assignments assignments={assignments} disabled={unfocused}
-                         course={course} detail={false}/>
+                         course={course} detail={true}/>
           </Row>
           <AssignPreferences assignments={assignments}
                              course={course}/>
