@@ -14,7 +14,10 @@ export function lastName(v,name){
 }
 
 export function lastNameAndCohort(v,name){
-  return v.get('cohort') + "_" + lastName(v,name)
+  if(name == NEW_TA_NAME)
+    return "AAA"
+  else
+    return (v.get('cohort') || "AAA") + "_" + lastName(v,name)
 }
 
 export var quarter_order = {'fall': 0, 'winter': 1, 'spring': 2}

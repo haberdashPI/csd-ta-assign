@@ -5,7 +5,7 @@ import {FormGroup, FormControl, Checkbox, Well, ButtonGroup,
 import {Map, List} from 'immutable'
 import {connect} from 'react-redux';
 
-import {EditableArea,Editable,Selectable} from './Editable'
+import {EditableArea,Editable,EditableOptions,Selectable} from './Editable'
 import DoubleMap from '../util/DoubleMap'
 import {DOCUMENT, REMOVE, ADD, CHANGE, STUDENT,
         COURSE, STANDARD, ASSIGN, ASSIGN_MODE,
@@ -90,7 +90,7 @@ class _StudentHours extends Component{
   render(){
     let {name,student,config,onChange,disabled} = this.props
     return (<Editable onChange={to => onChange(name,student,to)}
-                      validate={x => (x % config.hour_unit === 0 && x > 0)}
+                      validate={x => (x % config.hour_unit === 0 && x >= 0)}
                       message={"Must be a multiple of "+
                                config.hour_unit+" hours"}
                       disabled={disabled}>
@@ -204,7 +204,7 @@ function quarterLoadMatches(name,courses,assignments,order){
   }
 }
 
-const qlstring = {
+const shortorder = {
   "0": 'any',
   "1": "FWS",
   "2": "FSW",
@@ -212,6 +212,15 @@ const qlstring = {
   "4": "WSF",
   "5": "SFW",
   "6": "SWF"
+}
+const longorder = {
+  "0": 'any',
+  "1": "F > W > S",
+  "2": "F > S > W",
+  "3": "W > F > S",
+  "4": "W > S > F",
+  "5": "S > F > W",
+  "6": "S > W > F"
 }
 class _StudentQuarterLoad extends Component{
   static propTypes = {
@@ -236,19 +245,18 @@ class _StudentQuarterLoad extends Component{
         <Selectable onChange={to => this.props.onChange(name,to)}
                     disabled={disabled}
                     value={String(order)}>
-          {{"0": 'any',
-            "1": "F > W > S",
-            "2": "F > S > W",
-            "3": "W > F > S",
-            "4": "W > S > F",
-            "5": "S > F > W",
-            "6": "S > W > F"}}
+          {longorder}
         </Selectable>
       </span>)
     }else{
       return (<span className={(match ? 'completed' : 'uncompleted')}
-                    style={{width: "3em", height: "2em", display: "inline-block"}}>
-        {qlstring[String(order)]}
+                    style={{width: "3.5em", height: "2em",
+                            display: "inline-block"}}>
+        <Selectable onChange={to => this.props.onChange(name,to)}
+                    disabled={disabled}
+                    value={String(order)}>
+          {shortorder}
+        </Selectable>
       </span>)
     }
   }
@@ -284,7 +292,7 @@ class _StudentCohort extends Component{
                   disabled={disabled}
                   value={(student.get('cohort') ?
                           student.get('cohort') : "")}>
-        {{"": 'none',
+        {{"": 'no cohort',
           "1": "1st year",
           "2": "2nd year",
           "3": "3rd year",

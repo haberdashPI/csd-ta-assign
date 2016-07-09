@@ -2,7 +2,7 @@ import React, {Component, PropTypes} from 'react';
 import {findDOMNode} from 'react-dom';
 import _ from 'underscore'
 
-import {Autosize} from 'react-input-enhancements'
+import {Autosize, Combobox} from 'react-input-enhancements'
 
 function getTextWidth(text, font){
     // if given, use cached canvas for better performance
@@ -129,7 +129,7 @@ export class Editable extends Component{
       </div>)
     }else{
 
-      return (<Autosize value={this.state.edited}
+      return (<Autosize value={(this.state.edited ? this.state.edited : "")}
                         onChange={e => this.setState({edited: e.target.value})}
                         defaultWidth={10}>
         <input className={"editable_input " + this.validate()}
@@ -144,35 +144,26 @@ export class Editable extends Component{
   }
 }
 
-function showDropdown(selectComponent){
-  let element = findDOMNode(selectComponent)
-  let event = document.createEvent('MouseEvents')
-  event.initMouseEvent('mousedown', true, true, window)
-  element.dispatchEvent(event)
-}
-
 export class Selectable extends Component{
-  constructor(props){
-    super(props)
-  }
-
-  onChange(value){
-    this.props.onChange(value)
-  }
-
   render(){
-    let options = this.props.children
-    if(options instanceof Array){
-      options = {}
-      for(let x of this.props.children) options[x] = x
+    let options = []
+    for(let key of _.keys(this.props.children)){
+      options.push({text: this.props.children[key], value: key})
     }
 
-    return (<select className="editable_input"
-                    {...this.props}
-                    onChange={e => this.onChange(e.target.value)
-                      /*this.props.onChange(e.target.value)*/}>
-        {_.values(_.mapObject(options,(label,value) =>
-          <option key={value} value={value}>{label}</option>))}
-    </select>)
+    return (
+      <Combobox value={String(this.props.value)}
+                onValueChange={x => this.props.onChange(x)}
+                options={options}
+                defaultWidth={10}
+
+                placeholder={this.props.placeholder}
+                autoFocus={this.props.selectedByDefault}
+                autosize autocomplete>
+        {(iprops,{matchingText,width}) =>
+          <input type="text" {...iprops}
+                 className={"editable_field"}/>}
+
+      </Combobox>)
   }
 }

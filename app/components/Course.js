@@ -138,7 +138,7 @@ class _CourseQuarter extends Component{
                     disabled={disabled}
                     value={course.get('quarter')}>
           {(this.props.detail ?
-            ['fall','winter','spring'] :
+            {'fall': 'fall', 'winter': 'winter', 'spring': 'spring'} :
             {'fall': 'F', 'winter': 'W', 'spring': 'S'})}
         </Selectable>
       </strong>)
@@ -340,34 +340,55 @@ class _AssignPreferences extends Component{
   static propTypes = {
     assignments: PropTypes.instanceOf(Map).isRequired,
     course: PropTypes.instanceOf(Map).isRequired,
-    config: PropTypes.object.isRequired
+    config: PropTypes.object.isRequired,
+    onChangeInstructor: PropTypes.func.isRequired,
+    onChangeStudent: PropTypes.func.isRequired
   }
   render(){
-    let {assignments,course,config} = this.props
+    let {assignments,course,onChangeInstructor,
+         onChangeStudent,config} = this.props
     let filtered = assignments.filter(a => a.get('hours') > 0).
                                sortBy(lastName)
     return (<div>
       <Row>
         <Col md={2}>Instructor:</Col>
         {filtered.map((assign,name) => {
-           let instructorRank = rankClass(assign.get('instructorRank'),
-                                          config.default_instructor_rank)
+           let instructorRank = assign.get('instructorRank',
+                                           config.default_instructor_rank)
            return (<Col md={3} key={name}>
-          <span className={instructorRank+" pref-area"}>
-            {capitalize(instructorRank)} fit
-          </span>
+          <div className={rankClass(instructorRank)+" pref-area"}>
+            <Selectable value={String(instructorRank)}
+                        onChange={x =>
+                          onChangeInstructor(name,course.get('cid'),x)}>
+              {{"-2": "Terrible",
+                "-1": "Poor",
+                "0": "Okay",
+                "1": "Good",
+                "2": "Excellent"}}
+            </Selectable>
+            fit
+          </div>
            </Col>)
          }).toList()}
       </Row>
       <Row>
         <Col md={2}>TA:</Col>
         {filtered.map((assign,name) => {
-           let studentRank = rankClass(assign.get('studentRank'),
-                                       config.default_student_rank)
+           let studentRank = assign.get('studentRank',
+                                        config.default_student_rank)
            return (<Col md={3} key={name}>
-          <span className={studentRank+" pref-area"}>
-            {capitalize(studentRank)} fit
-          </span>
+          <div className={rankClass(studentRank)+" pref-area"}>
+            <Selectable value={String(studentRank)}
+                        onChange={x =>
+                          onChangeStudent(name,course.get('cid'),x)}>
+              {{"-2": "Terrible",
+                "-1": "Poor",
+                "0": "Okay",
+                "1": "Good",
+                "2": "Excellent"}}
+            </Selectable>
+            fit
+          </div>
            </Col>)
          }).toList()}
       </Row>
@@ -377,6 +398,25 @@ class _AssignPreferences extends Component{
 const AssignPreferences = connect(state => {
   return {
     config: state.config
+  }
+},dispatch => {
+  return {
+    onChangeInstructor: (student,cid,rank) => dispatch({
+      type: DOCUMENT,
+      command: CHANGE,
+      field: ASSIGN,
+      instructorRank: rank,
+      student: student,
+      course: cid
+    }),
+    onChangeStudent: (student,cid,rank) => dispatch({
+      type: DOCUMENT,
+      command: CHANGE,
+      field: ASSIGN,
+      studentRank: rank,
+      student: student,
+      course: cid
+    })
   }
 })(_AssignPreferences)
 
@@ -517,7 +557,7 @@ class _Course extends Component{
           </Col>
           <Col md={2}>
             {'('}<CourseNumber course={course} disabled={unfocused}/>{') - '}
-            <CourseQuarter course={course} disabled={unfocused}/>
+            <CourseQuarter course={course} disabled={unfocused} detail={true}/>
           </Col>
           <Col md={2}>
             ~enrollment:

@@ -22,12 +22,20 @@
 	border: 1px dotted
 }
 
-.editable_input {
+.editable_input,.editable_field:focus {
 	display: inline-block;
 	margin: 1px;
 	padding: 1px;
 	border: 1px solid;
 	border-radius: 2px;
+}
+
+input[type="text"].editable_input{
+	background: transparent;
+}
+
+input[type="text"].editable_field{
+	background: transparent;
 }
 
 .error{

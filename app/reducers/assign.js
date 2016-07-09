@@ -13,6 +13,14 @@ export default function assign(state,action){
         return state.update('assignments',asg =>
           asg.update(action.student,String(action.course),Map(),x =>
             x.set('fix',action.fix)))
+      }else if(action.instructorRank){
+        return state.update('assignments',asg =>
+          asg.update(action.student,String(action.course),Map(),x =>
+            x.set('instructorRank',Number(action.instructorRank))))
+      }else if(action.studentRank){
+        return state.update('assignments',asg =>
+          asg.update(action.student,String(action.course),Map(),x =>
+            x.set('studentRank',Number(action.studentRank))))
       }
     default: return state
   }
