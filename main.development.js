@@ -1,5 +1,9 @@
 import electron, { app, BrowserWindow, Menu, shell } from 'electron'
 import path from 'path'
+import child_process from 'child_process'
+import net from 'net'
+
+var port = "/tmp/NUCSD_TA_ASSIGN_v4_z1NSUX6F"
 
 let menu;
 let template;
@@ -19,6 +23,15 @@ app.on('window-all-closed', () => {
 app.on('ready', () => {
   var currentDirectory = __dirname;
   var currentFile = null;
+
+  if(process.env.NODE_ENV === 'development'){
+    var solver = child_process.spawn('julia',['-L','run.jl','-e','main()',
+                                              '--',port])
+  }else if(process.env.NODE_ENV === 'production'){
+    // TODO: call compiled process
+    var solver = child_process.spawn('julia',['-L','run.jl','-e','main()',
+                                              '--',port])
+  }
 
   mainWindow = new BrowserWindow({
     show: false,
@@ -50,6 +63,15 @@ app.on('ready', () => {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+
+    let client = net.connect({path: port}, () => {
+      console.log("closing server...")
+      client.write(JSON.stringify({
+        type: "close"
+      }) + "\n")
+    }).on('error',err => {
+      console.log(err)
+    })
   });
 
   electron.ipcMain.on('setCurrentFile',function(event,filename){

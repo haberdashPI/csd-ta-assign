@@ -8,6 +8,7 @@ import {documentData,docFromJSON,docToJSON} from '../reducers/document'
 
 import {Editable,Selectable} from './Editable'
 
+// node.js stuff...
 import net from 'net'
 import StreamArray from 'stream-json/utils/StreamArray'
 
@@ -15,6 +16,8 @@ const MHeader = Modal.Header
 const MFooter = Modal.Footer
 const MTitle = Modal.Title
 const MBody = Modal.Body
+
+var port = "/tmp/NUCSD_TA_ASSIGN_v4_z1NSUX6F"
 
 class _SolveDialog extends Component{
   static propTypes = {
@@ -104,7 +107,7 @@ class _SolveDialog extends Component{
             </Editable>
           </li>
 
-          <li>When there are two few hours to give all students enough,
+          <li>When there are too few hours to give all students enough,
             students can be
             <Editable onChange={to => this.setState({
                 max_under_units: Number(to)})}
@@ -130,7 +133,6 @@ export default connect(state => {
     preparing: state.solve.preparing
   }
 },dispatch => {
-  let port = "/tmp/NUCSD_TA_ASSIGN_v1_z1NSUX6F"
   return {
     runSolve: (config,document,component) => {
       component.setState({solving: true})
