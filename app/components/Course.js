@@ -216,7 +216,7 @@ const CourseHours = connect(state => {
         id: cid,
         command: CHANGE,
         field: COURSE, subfield: ['hours','total'],
-        to: to
+        to: Number(to)
       })
     }
   }
@@ -488,7 +488,7 @@ const AssignButton = connect(state => {
         type: DOCUMENT,
         command: CHANGE,
         field: ASSIGN,
-        hours: hours,
+        hours: Number(hours),
         course: cid, student: student
       })
     }
