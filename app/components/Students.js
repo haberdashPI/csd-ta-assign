@@ -240,7 +240,7 @@ class _StudentQuarterLoad extends Component{
     if(this.props.detail){
       return (<span>
         <span className={(match ? 'completed' : 'uncompleted')}>
-          <em>"Quarter Load"</em>
+          <em>Quarter Load</em>
         </span>
         <Selectable onChange={to => this.props.onChange(name,to)}
                     disabled={disabled}
@@ -345,7 +345,8 @@ class _AssignButton extends Component{
       </Button>)
     }
     else if(assign_mode.mode === COURSE){
-      disabled = disabled || assignments.get(name,assign_mode.id).get('fix')
+      let a = assignments.get(name,assign_mode.id)
+      disabled = disabled || (a ? a.get('fix') : false)
       text = (<span>
         Add {config.hour_unit} hours to
         {' '}{courses.getIn([String(assign_mode.id),'number'])}
@@ -524,7 +525,9 @@ class _Student extends Component{
               <StudentName disabled={unfocused} name={name}/>
             </Col>
             <Col md={2}>
-              <div className={(completed ? "completed" : "uncompleted")}
+              <div className={(completed ? "completed" : "uncompleted") +
+                                (assigned > student.get('total_hours') ?
+                                 " over_hours" : "")}
                    style={{width: "6.8em", height: "2em",
                            display: "inline-block"}}>
                 {assigned} of
