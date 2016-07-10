@@ -34,3 +34,7 @@ dist
 release
 main.js
 main.js.map
+
+# temporary development files for solve server
+Solve.jl
+run.jl
