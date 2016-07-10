@@ -15,7 +15,7 @@ import assign from './assign'
 
 import {quarter_order} from '../util/assignment'
 
-import {STUDENT, INSTRUCTOR, COURSE, ASSIGN, COHORT, DOCUMENT,
+import {SOLVE, STUDENT, INSTRUCTOR, COURSE, ASSIGN, COHORT, DOCUMENT,
         FILE_LOAD, FILE_SAVED, FILE_CLEAR} from './commands'
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -187,6 +187,8 @@ function dataReducer(state = createInitialState(),action){
         default: timestamp = state.timestamp
       }
       return {data: result, timestamp: timestamp}
+    case SOLVE:
+      return {data: action.document, timestamp: Date.now()}
     default: return state
   }
 }

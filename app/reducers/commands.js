@@ -6,6 +6,8 @@ export const STUDENT = 'STUDENT'
 export const INSTRUCTOR = 'INSTRUCTOR'
 export const COURSE = 'COURSE'
 export const ASSIGN = 'ASSIGN'
+export const SOLVE_SETUP = 'SOLVE_SETUP'
+export const SOLVE = 'SOLVE'
 export const COHORT = 'COHORT'
 
 export const DOCUMENT = 'DOCUMENT'

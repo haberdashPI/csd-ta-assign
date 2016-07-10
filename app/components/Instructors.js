@@ -11,7 +11,7 @@ import Course from './Course'
 
 import DoubleMap from '../util/DoubleMap'
 
-import {DOCUMENT, REMOVE, ADD, CHANGE, INSTRUCTOR,
+import {SOLVE_SETUP, DOCUMENT, REMOVE, ADD, CHANGE, INSTRUCTOR,
         STUDENT, COURSE, STATIC, LAST_NAME, CONFIG,
         STANDARD} from '../reducers/commands'
 import {NEW_INSTRUCTOR_NAME} from '../reducers/instructor'
@@ -185,7 +185,8 @@ export class Instructors extends Component {
     config: PropTypes.object.isRequired,
 
     onAdd: PropTypes.func.isRequired,
-    onHideCompleted: PropTypes.func.isRequired
+    onHideCompleted: PropTypes.func.isRequired,
+    solveProblem: PropTypes.func.isRequired
   }
 
   constructor(props){
@@ -211,7 +212,7 @@ export class Instructors extends Component {
 
   render(){
     let {instructors,courses,assignments,assign_mode,config,onAdd,
-         onHideCompleted} = this.props
+         onHideCompleted,solveProblem} = this.props
 
     let courseList
     if(this.state.detail){
@@ -274,6 +275,11 @@ export class Instructors extends Component {
               Summary
             </Button>
           </ButtonGroup>
+          {' '}
+          <Button bsStyle="primary"
+                  onClick={solveProblem}>
+            Solve
+          </Button>
         </h3>
         <FormGroup>
           <FormControl type="text"
@@ -305,6 +311,7 @@ export default connect(state => {
     onHideCompleted: hide => dispatch({
       type: CONFIG,
       to: {hide_completed_instructors: hide}
-    })
+    }),
+    solveProblem: () => dispatch({type: SOLVE_SETUP, end: false})
   }
 })(Instructors)

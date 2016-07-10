@@ -8,6 +8,8 @@ import Students from './Students'
 import Instructors from './Instructors'
 import InfoBadge from './InfoBadge'
 
+import SolveDialog from './SolveDialog'
+
 export default class TAAssignments extends Component {
   constructor(props){
     super(props)
@@ -29,6 +31,7 @@ export default class TAAssignments extends Component {
 
   render() {
     return (<div>
+      <SolveDialog/>
       {/* Small informational header */}
       <InfoBadge/>
 
