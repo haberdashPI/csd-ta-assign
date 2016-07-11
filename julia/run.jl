@@ -1,14 +1,15 @@
-push!(LOAD_PATH,realpath("julia"))
 import Solve
 import JSON
 
 function main()
+  println("Listening at port "*ARGS[1])
   server = listen(ARGS[1])
 
   begin
     run = true
     while run
       sock = accept(server)
+      println("Accepted connection.")
       while isopen(sock) && run
         line = readline(sock)
         if !isempty(line)

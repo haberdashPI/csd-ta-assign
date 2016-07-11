@@ -100,6 +100,7 @@
     "dsv-loader": "^1.0.3",
     "electron-debug": "^1.0.0",
     "font-awesome": "^4.6.3",
+    "log": "^1.4.0",
     "postcss": "^5.0.21",
     "react": "^15.1.0",
     "react-bootstrap": "^0.29.5",

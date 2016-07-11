@@ -1,9 +1,13 @@
 import electron, { app, BrowserWindow, Menu, shell } from 'electron'
-import path from 'path'
 import child_process from 'child_process'
 import net from 'net'
+import path from 'path'
+import fs from 'fs'
+import Log from 'log'
 
-var port = "/tmp/NUCSD_TA_ASSIGN_v4_z1NSUX6F"
+var port = "/tmp/NUCSD_TA_ASSIGN_v5_z1NSUX6F"
+
+var log = new Log('info',fs.createWriteStream(path.join(__dirname,'/main.log')));
 
 let menu;
 let template;
@@ -23,9 +27,36 @@ app.on('window-all-closed', () => {
 app.on('ready', () => {
   var currentDirectory = __dirname;
   var currentFile = null;
+  var julia
 
-  var solver = child_process.spawn('julia',['-L','./julia/run.jl','-e','main()',
-                                              '--',port])
+  // TODO: upon first run of app, query user, using
+  // these values as the default.
+  if(process.platform !== 'win32')
+    julia = '/usr/local/bin/julia'
+  else
+    julia = 'C:\julia\bin\julia'
+
+  log.info(`Starting ${julia}...`)
+  let rundir = path.join(__dirname,'julia')
+  let runfile = path.join(__dirname,'julia','run.jl')
+  let setupcode = `
+     push!(LOAD_PATH,"${rundir}")
+     include("${runfile}")
+     main()`
+  var solver = child_process.spawn(julia,['-e',setupcode,'--',port])
+  solver.stdout.on('data', (data) => {
+    let str = `${data}`
+    log.info(`solver - ${str.replace(/\n$/,"")}`);
+  });
+
+  solver.stderr.on('data', (data) => {
+    let str = `${data}`
+    log.error(`solver - ${str.replace(/\n$/,"")}`);
+  });
+
+  solver.on('close', (code) => {
+    log.warning(`solver process exited with code ${code}`);
+  });
 
   mainWindow = new BrowserWindow({
     show: false,
