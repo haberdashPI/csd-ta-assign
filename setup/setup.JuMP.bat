@@ -29,5 +29,5 @@ if '%errorlevel%' NEQ '0' (
     CD /D "%~dp0"
 :--------------------------------------
 
-setx /M PATH "%PATH%;C:\julia\bin"
-julia setup.JuMP.jl
+setx /M PATH "%PATH%;C:\julia\bin\"
+C:\julia\bin\julia jump.jl
