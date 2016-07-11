@@ -113,24 +113,35 @@ function organizeCourses(data){
 }
 
 function createInitialState(timestamp){
-  let {courses,coursesByInstructor} = organizeCourses(courses_csv)
-  let {students,studentRanks} = organizeStudents(students_csv)
-  let {instructors,instructorRanks} = organizeInstructors(instructors_csv)
 
-  instructors = instructors.withMutations(instructors => {
-    coursesByInstructor.forEach((v,k) => instructors.setIn([k,'courses'],v))
-  })
+  /* let {courses,coursesByInstructor} = organizeCourses(courses_csv)
+   * let {students,studentRanks} = organizeStudents(students_csv)
+   * let {instructors,instructorRanks} = organizeInstructors(instructors_csv)
+
+   * instructors = instructors.withMutations(instructors => {
+   *   coursesByInstructor.forEach((v,k) => instructors.setIn([k,'courses'],v))
+   * })*/
+
+  /* return {
+   *   timestamp: timestamp || Date.now(),
+   *   data: Map({
+   *     instructors: instructors,
+   *     courses: courses,
+   *     students: students,
+   *     assignments: DoubleMap.combineValues({
+   *       studentRank: studentRanks,
+   *       instructorRank: instructorRanks
+   *     })
+   *   })
+   * }*/
 
   return {
     timestamp: timestamp || Date.now(),
     data: Map({
-      instructors: instructors,
-      courses: courses,
-      students: students,
-      assignments: DoubleMap.combineValues({
-        studentRank: studentRanks,
-        instructorRank: instructorRanks
-      })
+      instructors: Map(),
+      courses: Map(),
+      students: Map(),
+      assignments: new DoubleMap()
     })
   }
 }

@@ -10,9 +10,9 @@ function changeCourse(state,action){
 function addCourse(state,action){
   let instructor = action.id
   let cids = state.get('courses').map(x => x.get('cid')).toList().toJS()
-  let cid = String(Math.max(...cids) + 1)
+  let cid = (cids.length > 0 ? String(Math.max(...cids) + 1) : "1")
   return state.withMutations(s =>
-    s.updateIn(['instructors',instructor,'courses'],x => x.add(cid)).
+    s.updateIn(['instructors',instructor,'courses'],Set(),x => x.add(cid)).
       setIn(['courses',cid],Map({
         quarter: "fall",
         number: 0,
