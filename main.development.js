@@ -24,14 +24,8 @@ app.on('ready', () => {
   var currentDirectory = __dirname;
   var currentFile = null;
 
-  if(process.env.NODE_ENV === 'development'){
-    var solver = child_process.spawn('julia',['-L','run.jl','-e','main()',
+  var solver = child_process.spawn('julia',['-L','./julia/run.jl','-e','main()',
                                               '--',port])
-  }else if(process.env.NODE_ENV === 'production'){
-    // TODO: call compiled process
-    var solver = child_process.spawn('julia',['-L','run.jl','-e','main()',
-                                              '--',port])
-  }
 
   mainWindow = new BrowserWindow({
     show: false,
@@ -53,7 +47,7 @@ app.on('ready', () => {
           type: "warning",
           buttons: ['Yes','No'],
           title: "Really Quit?",
-          message: 'This document has unsaved changes '+
+          message: 'This document has unsaved changes. '+
                     'Are you sure you want to quit?',
         }) == 1){
       // don't quit...
