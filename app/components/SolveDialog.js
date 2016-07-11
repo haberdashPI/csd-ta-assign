@@ -54,67 +54,68 @@ class _SolveDialog extends Component{
         <MTitle>Solution Constraints</MTitle>
       </MHeader>
       <MBody>
-        <p><strong>Units</strong> = {this.state.hour_unit} hours</p>
         <ul>
-          <li>There will be at most
+          <li>At most
             <Editable onChange={to => this.setState({
-                max_units: Number(to)})}
-                      validate={(x) => Math.round(x) === Number(x)}>
-              {this.state.max_units}
-            </Editable> units in one assignment.
+                max_units: to/7.5})}
+                      validate={(x) => x % this.state.hour_unit === 0}>
+              {this.state.max_units*7.5}
+            </Editable> hours/week per assignment.
           </li>
 
-          <li>There will be at most
+          <li>At most
             <Editable onChange={to => this.setState({
-                quarter_max_units: Number(to)})}
-                      validate={(x) => Math.round(x) === Number(x)}>
-              {this.state.quarter_max_units}
-            </Editable> units in one quarter for a student.
+                quarter_max_units: to/7.5})}
+                      validate={(x) => x % this.state.hour_unit === 0}>
+              {this.state.quarter_max_units*7.5}
+            </Editable> hours/week for each student, per quarter.
           </li>
 
-          <li>Student preferences will be multiples by
-            <Editable onChange={to => this.setState({
-                student_weight: Number(to)})}
-                      validate={(x) => Math.round(x) === Number(x)}>
-              {this.state.student_weight}
-            </Editable>
-            when they do not want any extra hours.
-          </li>
-
-          <li>Student preferences will be multipled by
-            <Editable onChange={to => this.setState({
-                student_extrahour_weight: Number(to)})}
-                      validate={(x) => Math.round(x) === Number(x)}>
-              {this.state.student_extrahour_weight}
-            </Editable>
-            when they are willing to take extra hours.
-          </li>
-
-          <li>Students who volunteer will get a maximum of
-            <Editable onChange={to => this.setState({
-                max_extra_over_units: Number(to)})}
-                      validate={(x) => Math.round(x) === Number(x)}>
-              {this.state.max_extra_over_units}
-            </Editable>
-            extra unit(s).
-          </li>
-
-          <li>Instructor preferences are multipled by
+          <li>Instructor preferences multipled by
             <Editable onChange={to => this.setState({
                 instructor_weight: Number(to)})}
-                      validate={(x) => Math.round(x) === Number(x)}>
+                      validate={(x) => !isNaN(x)}>
               {this.state.instructor_weight}
-            </Editable>
+            </Editable>.
+            (Larger values will give more importance to instructor preferences.)
           </li>
 
-          <li>When there are too few hours to give all students enough,
-            students can be
+          <li>Student preferences multipled by
             <Editable onChange={to => this.setState({
-                max_under_units: Number(to)})}
-                      validate={(x) => Math.round(x) === Number(x)}>
-              {this.state.max_under_units}
+                student_weight: Number(to)})}
+                      validate={(x) => !isNaN(x)}>
+              {this.state.student_weight}
             </Editable>
-            units below the expected amount.
+            when they <strong>will not</strong> take extra hours.
+          </li>
+
+          <li>Student preferences multipled by
+            <Editable onChange={to => this.setState({
+                student_extrahour_weight: Number(to)})}
+                      validate={(x) => !isNaN(x)}>
+              {this.state.student_extrahour_weight}
+            </Editable>
+            when they <strong>will</strong> take extra hours.
+          </li>
+
+          <li>Willing students will take no more than
+            <Editable onChange={to => this.setState({
+                max_extra_over_units: to/7.5})}
+                      validate={(x) => x % this.state.hour_unit === 0}>
+              {this.state.max_extra_over_units*7.5}
+            </Editable>
+            extra hours.
+          </li>
+
+
+
+          <li>Student will recieve no more than
+            <Editable onChange={to => this.setState({
+                max_under_units: to/7.5})}
+                      validate={(x) => x % this.state.hour_unit === 0}>
+              {this.state.max_under_units*7.5}
+            </Editable>
+            fewers hours than their expected amount.
           </li>
         </ul>
         <Button bsStyle="primary"
