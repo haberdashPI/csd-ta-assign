@@ -29,5 +29,5 @@ if '%errorlevel%' NEQ '0' (
     CD /D "%~dp0"
 :--------------------------------------
 
-setx /M PATH "%PATH%;C:\julia\bin\"
-C:\julia\bin\julia jump.jl
+C:\julia\bin\julia -e "Pkg.add(\"JuMP\");Pkg.add(\"AmplNLWriter\");Pkg.add(\"Lazy\");Pkg.add(\"Iterators\");Pkg.add(\"JSON\");Pkg.add(\"Cbc\");using JuMP;using AmplNLWriter;using Lazy;using Iterators;using JSON;using Cbc"
+PAUSE
