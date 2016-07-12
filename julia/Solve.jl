@@ -33,7 +33,7 @@ function setin(nested,keys,to)
   nested
 end
 
-const qorders = [[1,1,1];[1,2,3];[1,3,2];[2,1,3];[2,3,1];[3,1,2];[3,2,1]]
+const qorders = [[1 1 1];[1 2 3];[1 3 2];[2 1 3];[2 3 1];[3 1 2];[3 2 1]]
 
 type Required
   i::Int
@@ -239,12 +239,16 @@ function setup_constraints(m,assignment,p::Problem,old::Solution)
               sum{assignment[i,j,k], i=1:p.nstudents,k=1:p.maxunits})
 
   # students cannot have more than the max hours in a quarter
-  @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[1],
-                    k=1:p.maxunits} .≤ p.quarter_maxunits)
-  @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[2],
-                    k=1:p.maxunits} .≤ p.quarter_maxunits)
-  @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[3],
-                    k=1:p.maxunits} .≤ p.quarter_maxunits)
+  if !isempty(p.quarterc[1])
+    @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[1],
+                      k=1:p.maxunits} .≤ p.quarter_maxunits)
+  elseif !isempty(p.quarterc[1])
+    @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[2],
+                      k=1:p.maxunits} .≤ p.quarter_maxunits)
+  elseif !isempty(p.quarterc[3])
+    @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[3],
+                      k=1:p.maxunits} .≤ p.quarter_maxunits)
+  end
 
   # students' overall load cannot be too far off from their target load
   @constraint(m,p.min_off .≤
@@ -289,15 +293,18 @@ function setup_objective(m,assignment,p::Problem)
 
              # we prefer qorder[1] > qorder[2] > qorder[3]
              3*p.hourweight*sum{assignment[i,j,k],
-                                i=1:p.nstudents,j=p.quarterc[p.qorder[1]],
+                                i=1:p.nstudents,
+								j=p.quarterc[qorders[p.qorder[i],1]],
                                 k=1:p.maxunits} +
 
              2*p.hourweight*sum{assignment[i,j,k],
-                                i=1:p.nstudents,j=p.quarterc[p.qorder[2]],
+                                i=1:p.nstudents,
+								j=p.quarterc[qorders[p.qorder[i],2]],
                                 k=1:p.maxunits} +
 
              1*p.hourweight*sum{assignment[i,j,k],
-                                i=1:p.nstudents,j=p.quarterc[p.qorder[3]],
+                                i=1:p.nstudents,
+								j=p.quarterc[qorders[p.qorder[i],3]],
                                 k=1:p.maxunits})
   m
 end
@@ -316,15 +323,18 @@ function setup_objective(m,assignment,p::Problem,closeto)
 
              # we prefer qorder[1] > qorder[2] > qorder[3]
              3*p.hourweight*sum{assignment[i,j,k],
-                                i=1:p.nstudents,j=p.quarterc[p.qorder[1]],
+                                i=1:p.nstudents,
+								j=p.quarterc[qorders[p.qorder[i]][1]],
                                 k=1:p.maxunits} +
 
              2*p.hourweight*sum{assignment[i,j,k],
-                                i=1:p.nstudents,j=p.quarterc[p.qorder[2]],
+                                i=1:p.nstudents,
+								j=p.quarterc[qorders[p.qorder[i]][2]],
                                 k=1:p.maxunits} +
 
              1*p.hourweight*sum{assignment[i,j,k],
-                                i=1:p.nstudents,j=p.quarterc[p.qorder[3]],
+                                i=1:p.nstudents,
+								j=p.quarterc[qorders[p.qorder[i]][3]],
                                 k=1:p.maxunits})
   m
 end
