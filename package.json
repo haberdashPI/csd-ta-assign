@@ -97,11 +97,13 @@
     "webpack-hot-middleware": "^2.10.0"
   },
   "dependencies": {
+    "babel-runtime": "^6.9.2",
     "bootstrap": "^3.3.6",
     "css-modules-require-hook": "^4.0.0",
     "dsv-loader": "^1.0.3",
     "electron-debug": "^1.0.0",
     "font-awesome": "^4.6.3",
+    "immutable": "^3.8.1",
     "log": "^1.4.0",
     "postcss": "^5.0.21",
     "react": "^15.1.0",
@@ -118,8 +120,7 @@
     "redux-undo": "^1.0.0-beta8",
     "source-map-support": "^0.4.0",
     "stream-json": "^0.4.2",
-    "underscore": "^1.8.3",
-    "source-map-support": "^0.4.0"
+    "underscore": "^1.8.3"
   },
   "devEngines": {
     "node": "4.x || 5.x || 6.x",
