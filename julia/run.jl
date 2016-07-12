@@ -51,8 +51,10 @@ function run_command(command)
   catch e
     buffer = IOBuffer()
     showerror(buffer,e,catch_backtrace())
+	estr = takebuf_string(buffer)
+	println(estr)
     Dict("result" => "error",
-         "message" => "Exception thrown: \n"*takebuf_string(buffer))
+         "message" => "Exception thrown: \n"*estr)
   end
 end
 
