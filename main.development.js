@@ -5,7 +5,8 @@ import path from 'path'
 import fs from 'fs'
 import Log from 'log'
 
-var port = "/tmp/NUCSD_TA_ASSIGN_v5_z1NSUX6F"
+var prefix = (process.platform !== 'win32' ? "/tmp/" : "\\\\.\\pipe\\")
+var port = prefix+"NUCSD_TA_ASSIGN_v1_z1NSUX6F"
 
 var log = new Log('info',fs.createWriteStream(path.join(__dirname,'/main.log')));
 
@@ -23,6 +24,9 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
+function escape_slashes(str){
+  return str.replace(/\\/g,"\\\\")
+}
 
 app.on('ready', () => {
   var currentDirectory = __dirname;
@@ -34,15 +38,16 @@ app.on('ready', () => {
   if(process.platform !== 'win32')
     julia = '/usr/local/bin/julia'
   else
-    julia = 'C:\julia\bin\julia'
+    julia = 'C:\\julia\\bin\\julia'
 
   log.info(`Starting ${julia}...`)
   let rundir = path.join(__dirname,'julia')
   let runfile = path.join(__dirname,'julia','run.jl')
   let setupcode = `
-     push!(LOAD_PATH,"${rundir}")
-     include("${runfile}")
+     push!(LOAD_PATH,"${escape_slashes(rundir)}")
+     include("${escape_slashes(runfile)}")
      main()`
+
   var solver = child_process.spawn(julia,['-e',setupcode,'--',port])
   solver.stdout.on('data', (data) => {
     let str = `${data}`

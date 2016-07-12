@@ -17,7 +17,8 @@ const MFooter = Modal.Footer
 const MTitle = Modal.Title
 const MBody = Modal.Body
 
-var port = "/tmp/NUCSD_TA_ASSIGN_v5_z1NSUX6F"
+var prefix = (process.platform !== 'win32' ? "/tmp/" : "\\\\.\\pipe\\")
+var port = prefix+"NUCSD_TA_ASSIGN_v1_z1NSUX6F"
 
 class _SolveDialog extends Component{
   static propTypes = {
@@ -150,7 +151,12 @@ export default connect(state => {
       }).on('error',err => {
         dispatch({
           type: ERROR,
-          message: String(err)
+          message: "An error occurred while connecting "+
+		  "to the solver. It may take some time for the "+
+		  "solver to start up. If you just opened the program, "+
+		  "try again in a few seconds. If "+
+		  "the problem persists, you may need to reinstall "+
+		  "the program. Error details: \n"+String(err)
         })
         component.setState({solving: false})
       })
