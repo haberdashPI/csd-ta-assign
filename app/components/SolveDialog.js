@@ -1,7 +1,7 @@
 import React, {Component, PropTypes} from 'react';
 import {Map, List} from 'immutable'
 import {Grid, Row, Col, Button, ButtonGroup, Input,
-        Modal} from 'react-bootstrap'
+        Modal, Checkbox} from 'react-bootstrap'
 import {connect} from 'react-redux';
 import {SOLVE, SOLVE_SETUP, ERROR} from '../reducers/commands'
 import {documentData,docFromJSON,docToJSON} from '../reducers/document'
@@ -44,7 +44,9 @@ class _SolveDialog extends Component{
       default_student_rank: config.default_student_rank,
       max_extra_over_units: 1,
       max_over_units: 0,
-      max_under_units: 1
+      max_under_units: 1,
+      closeto: false,
+      differentfrom: false,
     }
   }
 
@@ -52,9 +54,10 @@ class _SolveDialog extends Component{
     let {preparing,endSolve,runSolve,document} = this.props
     return (<Modal show={preparing} onHide={endSolve}>
       <MHeader closeButton>
-        <MTitle>Solution Constraints</MTitle>
+        <MTitle>Find a solution…</MTitle>
       </MHeader>
       <MBody>
+        <h4>Constraints</h4>
         <ul>
           <li>At most
             <Editable onChange={to => this.setState({
@@ -105,10 +108,8 @@ class _SolveDialog extends Component{
                       validate={(x) => x % this.state.hour_unit === 0}>
               {this.state.max_extra_over_units*7.5}
             </Editable>
-            extra hours.
+            extra hours/week.
           </li>
-
-
 
           <li>Student will recieve no more than
             <Editable onChange={to => this.setState({
@@ -116,9 +117,32 @@ class _SolveDialog extends Component{
                       validate={(x) => x % this.state.hour_unit === 0}>
               {this.state.max_under_units*7.5}
             </Editable>
-            fewers hours than their expected amount.
+            fewers hours/week than their expected amount.
           </li>
         </ul>
+
+        <h4>Options</h4>
+        <p><em>The following options are only useful if you have already found a
+          complete or mostly complete solution.</em></p>
+        <Checkbox checked={this.state.closeto}
+                  onClick={e => this.setState({
+                      closeto: !this.state.closeto,
+                      // all close solutions must be different
+                      differentfrom: (this.state.closeto ?
+                                      this.state.differentfrom : true)
+                    })}>
+          Find a similar (but different) solution.
+        </Checkbox>
+        <Checkbox checked={this.state.differentfrom}
+                  onClick={e => this.setState({
+                      differentfrom: !this.state.differentfrom,
+                      // all close solutions must be different
+                      closeto: (this.state.differentfrom ?
+                                false : this.state.closeto)
+                    })}>
+          Find a different solution.
+        </Checkbox>
+
         <Button bsStyle="primary"
                 onClick={() => runSolve(this.state,document,this)}
                 disabled={this.state.solving}>

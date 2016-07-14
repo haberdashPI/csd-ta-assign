@@ -219,6 +219,24 @@ type Solution
 end
 
 Solution(r=:None) = Solution(r,Array{Int,2}())
+function Solution(p::Problem,probjson::Dict)
+  assignments = zeros(Int,(p.nstudents,p.ncourses))
+  for i in 1:p.nstudents
+    for j in 1:p.ncourses
+      student,course = p.students[i],p.courses[j]
+      hours = getin(probjson["assignments"],[student,course,"hours"],0)
+      if hours > 0
+        units = round(Int,hours / p.hunits)
+        assignments[i,j] = units
+      end
+    end
+  end
+  solved = all(1:p.ncourses) do j
+    p.course_total[j] == sum(assignments[:,j])
+  end
+
+  Solution((solved ? :Optimal : :Partial),assignments)
+end
 
 function setup_constraints(m,assignment,p::Problem,old::Solution)
   # maintain the correct representation of assignment hours
@@ -266,11 +284,11 @@ function setup_constraints(m,assignment,p::Problem,old::Solution)
   # same assignment locations as an old, valid solution: this guarantees the
   # new solution is different.
   #
-  # NOTE: Some different solutions will be missed by this approach because
-  # they will not satisfy this constraint. However, they will be trivially
-  # different: differing only in the distribution of hours alloted between
-  # courses that are equally ranked. It has the advantage that it can be
-  # expressed as a linear constraint
+  # NOTE: Some different solutions will be missed by this approach because they
+  # will not satisfy this constraint. However, they will be trivially different:
+  # differing only in the distribution of hours alloted between courses that are
+  # equally ranked. This approach has the advantage that it can be expressed as
+  # a linear constraint
   if old.result == :Optimal
     position = old.assignments .> 0
     oldsum = sum(old.assignments .* position .* p.ranks)
@@ -391,7 +409,12 @@ end
 
 function solve_problem(problem,prefs)
   p = setup_problem(problem,prefs)
-  s = assign_hours(p)
+  if prefs["closeto"] || prefs["differentfrom"]
+    s = assign_hours(p,Solution(p,problem))
+  else
+    s = assign_hours(p)
+  end
+
   if s.result == :Optimal
     Dict("result" => "optimal",
          "solution" => represent_solution(p,s))
