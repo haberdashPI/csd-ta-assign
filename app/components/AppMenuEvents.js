@@ -3,7 +3,8 @@ import {Map, List} from 'immutable'
 import {Grid, Row, Col, Panel} from 'react-bootstrap'
 import {connect} from 'react-redux';
 import {ActionCreators as UndoActionCreators} from 'redux-undo'
-import {documentData,isClean,docToJSON,docFromJSON} from '../reducers/document'
+import {documentData,isClean,docToJSON,docFromJSON,docToCSV} from '../reducers/document'
+import _ from 'underscore'
 
 // TODO: allow loading of student, course and instructor data
 
@@ -33,6 +34,7 @@ class AppMenuEvents extends Component {
 
     electron.on('open',(e,file) => this.openFile(file))
     electron.on('save',(e,file) => this.saveFile(file))
+    electron.on('exportcsv',(e,file) => this.exportFile(file))
     electron.on('new',(e) => this.newFile())
 
     electron.on('undo',() =>
@@ -46,6 +48,7 @@ class AppMenuEvents extends Component {
   componentWillUnmount(){
     electron.removeAllListeners('open')
     electron.removeAllListeners('save')
+    electron.removeAllListeners('exportcsv')
     electron.removeAllListeners('new')
 
     electron.removeAllListeners('undo')
@@ -118,6 +121,20 @@ class AppMenuEvents extends Component {
         this.props.dispatch({type: FILE_SAVED})
         this.setState({filename: filename})
       }
+    })
+  }
+
+  exportFile(filename){
+    filename = (fileparse(filename).ext ? filename : filename + ".csv")
+    let data = docToCSV(this.props.data)
+    fs.writeFile(filename,data,err => {
+      if(err){
+        this.props.dispatch({
+          type: ERROR,
+          message: `Exception while saving ${filename}: ${err.message}`
+        })
+      }
+      console.log(`Document exported to ${filename}.`)
     })
   }
 

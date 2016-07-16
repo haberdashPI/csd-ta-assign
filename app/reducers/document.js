@@ -165,6 +165,58 @@ export function docToJSON(doc){
   }
 }
 
+export function docToCSV(doc){
+  let rows = []
+  let maxStudent = 0
+  for(let instructor of doc.get('instructors').keys()){
+    for(let cid of doc.getIn(['instructors',instructor,'courses'])){
+      let row = {
+        instructor: instructor,
+        course: doc.getIn(['courses',cid,'name']),
+        number: doc.getIn(['courses',cid,'number']),
+        quarter: doc.getIn(['courses',cid,'quarter']),
+        students: []
+      }
+      let count = 1
+      for(let student of doc.get('assignments').get(null,cid).keys()){
+        let assign = doc.get('assignments').get(student,cid)
+        if(assign.get('hours')){
+          row.students.push({
+            name: student,
+            hours: assign.get('hours')
+          })
+          count += 1
+        }
+      }
+      maxStudent = Math.max(maxStudent,count-1)
+      rows.push(row)
+    }
+  }
+
+  rows = _.sortBy(rows,x => Number(x.number))
+  rows = _.sortBy(rows,x => quarter_order[x.quarter])
+
+  let string = 'instructor,course,number,quarter'
+  let i = 0
+  for(i=1;i<=maxStudent;i++){
+    string += (',student'+String(i)+',hours'+String(i))
+  }
+  string += '\n'
+
+  i = 0
+  for(let row of rows){
+    i += 1
+    string += [row.instructor,'"'+row.course+'"',row.number,row.quarter].join(',')
+    for(let student of row.students){
+      string += (',' + student.name + ',' + student.hours)
+    }
+    string += '\n'
+  }
+
+
+  return string
+}
+
 export function isClean(state){
   return state.lastStored &&
          (!state.undo || state.lastStored === state.undo.present.timestamp)

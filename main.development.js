@@ -131,6 +131,20 @@ app.on('ready', () => {
     }
   }
 
+  function exportFile(focusedWindow){
+    var filename = electron.dialog.showSaveDialog(focusedWindow,{
+      title: 'Export as CSV',
+      defaultPath: currentDirectory,
+      filters: [{name: 'Comma Separated Values', extensions: ['csv']},
+                {name: 'All Files', extensions: ['*']}]
+    })
+    if(filename){
+      currentDirectory = path.dirname(filename)
+      currentFile = filename
+      focusedWindow.webContents.send('exportcsv',filename)
+    }
+  }
+
   template = [
     {
     label: 'File',
@@ -209,8 +223,7 @@ app.on('ready', () => {
         enabled: false,
         accelerator: 'Alt+CmdOrCtrl+E',
         click: function(item,focusedWindow){
-          if(focusedWindow)
-            focusedWindow.webContents.send('exportcsv')
+          if(focusedWindow) exportFile(focusedWindow)
         }
       }
     ]
