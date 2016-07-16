@@ -357,12 +357,8 @@ function setup_objective(m,assignment,p::Problem,closeto)
   m
 end
 
-function assign_hours(p::Problem,old=Solution();
-                      timelimit=5,closeto=false)
-  # TODO: figure out how to specify a timelimit for CBC.
+function assign_hours(p::Problem,old=Solution();closeto=false)
   m = Model()
-  # m = Model(solver=BonminNLSolver(["bonmin.time_limit=$timelimit"]))
-  # m = Model(solver=CouenneNLSolver())
 
   @variable(m,0 ≤ assignment[1:p.nstudents,1:p.ncourses,1:p.maxunits] ≤ 1,Int)
 
@@ -410,7 +406,7 @@ end
 function solve_problem(problem,prefs)
   p = setup_problem(problem,prefs)
   if prefs["closeto"] || prefs["differentfrom"]
-    s = assign_hours(p,Solution(p,problem))
+    s = assign_hours(p,Solution(p,problem),closeto=prefs["closeto"])
   else
     s = assign_hours(p)
   end
