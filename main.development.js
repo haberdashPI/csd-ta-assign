@@ -121,7 +121,7 @@ app.on('ready', () => {
     var filename = electron.dialog.showSaveDialog(focusedWindow,{
       title: 'Save File',
       defaultPath: currentDirectory,
-      filters: [{name: 'Schedules', extensions: ['sch']},
+      filters: [{name: 'TA Assignments', extensions: ['taa']},
                 {name: 'All Files', extensions: ['*']}]
     })
     if(filename){

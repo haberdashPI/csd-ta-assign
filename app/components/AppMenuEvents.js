@@ -107,7 +107,7 @@ class AppMenuEvents extends Component {
   }
 
   saveFile(filename){
-    filename = (fileparse(filename).ext ? filename : filename + ".json")
+    filename = (fileparse(filename).ext ? filename : filename + ".taa")
     let data = docToJSON(this.props.data)
     fs.writeFile(filename,JSON.stringify(data,null,2),err => {
       if(err){
