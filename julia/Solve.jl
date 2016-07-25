@@ -92,6 +92,9 @@ type Problem
   # the overall weight given to course rank in the objective function
   rankweight::Float64
 
+  # the overall weight given to the number of courses assigned to a student
+  countweight::Float64
+
   # the overall weight given to the hour totals for each quarter in
   # the objective function
   hourweight::Float64
@@ -199,18 +202,20 @@ function setup_problem(problem,prefs)
     end
   end)/length(students)
 
-  # 1 / numcoursese / rankscale
-  rankweight = 1 / ncourses / mean_student_weight
+  maxrank = (2*mean_student_weight + 2*prefs["instructor_weight"])
+  rankweight = 1 / ncourses / maxrank * prefs["rank_weight"]
+
+  countweight = 1 / ncourses * prefs["count_weight"]
 
   # 1 / numstudents / max dot product
-  hourweight = 1 / nstudents / sum([3,2,1].^2)
+  hourweight = 1 / nstudents / sum([3,2,1].^2) * prefs["hour_weight"]
 
   # 1 / numcourses
   closetoweight = 1 / ncourses
 
   Problem(problem,nstudents,ncourses,students,courses,hunits,ranks,reqs,loads,
           course_total,course_range,quarterc,qorder,min_off,max_off,maxunits,
-          quarter_maxunits,rankweight,hourweight,closetoweight)
+          quarter_maxunits,rankweight,countweight,hourweight,closetoweight)
 end
 
 type Solution
@@ -309,6 +314,11 @@ function setup_objective(m,assignment,p::Problem)
              sum{assignment[i,j,k]*p.ranks[i,j],
                  i=1:p.nstudents,j=1:p.ncourses,k=1:p.maxunits} +
 
+             # all else being equal, we prefer courses to be
+             # assigned all in one block (all hours to one student)
+             p.countweight *
+             (-sum{assignment[i,j,1], i=1:p.nstudents,j=1:p.ncourses}) +
+
              # we prefer qorder[1] > qorder[2] > qorder[3]
              3*p.hourweight*sum{assignment[i,j,k],
                                 i=1:p.nstudents,
@@ -338,6 +348,11 @@ function setup_objective(m,assignment,p::Problem,closeto)
              p.closetoweight *
              sum{assignment[i,j,k] * closeto[i,j],
                  i=1:p.nstudents,j=1:p.ncourses,k=1:p.maxunits} +
+
+             # all else being equal, we want to minimize the number of courses a
+             # student is assigned
+             p.countweight *
+             (-sum{assignment[i,j,1], i=1:p.nstudents,j=1:p.ncourses}) +
 
              # we prefer qorder[1] > qorder[2] > qorder[3]
              3*p.hourweight*sum{assignment[i,j,k],

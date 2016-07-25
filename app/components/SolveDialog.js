@@ -47,6 +47,9 @@ class _SolveDialog extends Component{
       max_under_units: 1,
       closeto: false,
       differentfrom: false,
+      rank_weight: 1,
+      hour_weight: 1,
+      count_weight: 1
     }
   }
 
@@ -57,7 +60,7 @@ class _SolveDialog extends Component{
         <MTitle>Find a solution…</MTitle>
       </MHeader>
       <MBody>
-        <h4>Constraints</h4>
+        <h4>Hourly Limits</h4>
         <ul>
           <li>At most
             <Editable onChange={to => this.setState({
@@ -75,33 +78,6 @@ class _SolveDialog extends Component{
             </Editable> hours/week for each student, per quarter.
           </li>
 
-          <li>Instructor preferences multipled by
-            <Editable onChange={to => this.setState({
-                instructor_weight: Number(to)})}
-                      validate={(x) => !isNaN(x)}>
-              {this.state.instructor_weight}
-            </Editable>.
-            (Larger values will give more importance to instructor preferences.)
-          </li>
-
-          <li>Student preferences multipled by
-            <Editable onChange={to => this.setState({
-                student_weight: Number(to)})}
-                      validate={(x) => !isNaN(x)}>
-              {this.state.student_weight}
-            </Editable>
-            when they <strong>will not</strong> take extra hours.
-          </li>
-
-          <li>Student preferences multipled by
-            <Editable onChange={to => this.setState({
-                student_extrahour_weight: Number(to)})}
-                      validate={(x) => !isNaN(x)}>
-              {this.state.student_extrahour_weight}
-            </Editable>
-            when they <strong>will</strong> take extra hours.
-          </li>
-
           <li>Willing students will take no more than
             <Editable onChange={to => this.setState({
                 max_extra_over_units: to/7.5})}
@@ -111,17 +87,72 @@ class _SolveDialog extends Component{
             extra hours/week.
           </li>
 
-          <li>Student will recieve no more than
+          <li>Student will receive no more than
             <Editable onChange={to => this.setState({
                 max_under_units: to/7.5})}
                       validate={(x) => x % this.state.hour_unit === 0}>
               {this.state.max_under_units*7.5}
             </Editable>
-            fewers hours/week than their expected amount.
+            fewer hours/week than their expected amount.
           </li>
         </ul>
 
-        <h4>Options</h4>
+        <h4>Preferences</h4>
+        <ul>
+          <li>Assignment preferences have an importance of
+            <Editable onChange={to => this.setState({
+                rank_weight: Number(to)})}
+                      validate={(x) => !isNaN(x)}>
+              {this.state.rank_weight}
+            </Editable>
+          </li>
+
+          <li>Minimizing the number of courses a student receives
+            has an importance of
+            <Editable onChange={to => this.setState({
+                count_weight: Number(to)})}
+                      validate={x => !isNaN(x)}>
+              {this.state.count_weight}
+            </Editable>
+          </li>
+
+          <li>Maintaining the preferred load of hours across quarters
+            has an importance of
+            <Editable onChange={to => this.setState({
+                hour_weight: Number(to)})}
+                      validate={x => !isNaN(x)}>
+              {this.state.hour_weight}
+            </Editable>.
+          </li>
+
+          <li>Instructor preferences have an importance of
+            <Editable onChange={to => this.setState({
+                instructor_weight: Number(to)})}
+                      validate={(x) => !isNaN(x)}>
+              {this.state.instructor_weight}
+            </Editable>.
+          </li>
+
+          <li>Student preferences have an importance of
+            <Editable onChange={to => this.setState({
+                student_weight: Number(to)})}
+                      validate={(x) => !isNaN(x)}>
+              {this.state.student_weight}
+            </Editable>
+            when they <strong>will not</strong> take extra hours.
+          </li>
+
+          <li>Student preferences have an importance of
+            <Editable onChange={to => this.setState({
+                student_extrahour_weight: Number(to)})}
+                      validate={(x) => !isNaN(x)}>
+              {this.state.student_extrahour_weight}
+            </Editable>
+            when they <strong>will</strong> take extra hours.
+          </li>
+        </ul>
+
+        <h4>Relationship to Existing solution</h4>
         <p><em>The following options are only useful if you have already found a
           complete or mostly complete solution.</em></p>
         <Checkbox checked={this.state.closeto}
