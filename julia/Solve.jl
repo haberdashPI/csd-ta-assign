@@ -418,8 +418,38 @@ function represent_solution(p::Problem,solution::Array{Int,2})
   result
 end
 
+function validate(p)
+  course_hours = sum(p.course_total)*p.hunits
+  min_hours = (sum(p.loads) + p.min_off*p.nstudents)*p.hunits
+  max_hours = (sum(p.loads) + sum(p.max_off))*p.hunits
+  if course_hours < min_hours
+
+    return """The TAs have too many assigned hours: at least $min_hours must be
+available, but the courses require only $course_hours. Reduce the number of
+hours that each TA must be assigned."""
+
+  elseif course_hours > max_hours
+
+    return """The TAs have too few assigned hours: the courses require
+$course_hours hours, but TAs can be assigned at most
+$max_hours. Increase the number of hours that each TA must be assigned."""
+
+  end
+
+  return ""
+end
+
+
+
 function solve_problem(problem,prefs)
   p = setup_problem(problem,prefs)
+
+  message = validate(p)
+  if !isempty(message)
+    return Dict("result" => "error",
+                "message" => message)
+  end
+
   if prefs["closeto"] || prefs["differentfrom"]
     s = assign_hours(p,Solution(p,problem),closeto=prefs["closeto"])
   else
