@@ -426,7 +426,7 @@ function validate(p)
 
     return """The TAs have too many assigned hours: at least $min_hours must be
 available, but the courses require only $course_hours. Reduce the number of
-hours that each TA must be assigned."""
+hours that each TA must be assigned, or increase the number of hours a TA can fall below their required amount."""
 
   elseif course_hours > max_hours
 
