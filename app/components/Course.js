@@ -293,6 +293,7 @@ class _Assignments extends Component{
                  <Glyphicon glyph="minus"/>
                </Button>
                <Button bsSize="xsmall" disabled={disabled}
+                       bsStyle={(assign.get('fix') ? "primary" : "default")}
                        onClick={to => onFix(name,course.get('cid'),
                                             !assign.get('fix'))}
                        active={assign.get('fix')}>
