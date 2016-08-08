@@ -59,7 +59,7 @@ function run_command(command)
 end
 
 prob = "/Users/davidlittle/Desktop/TA2016_17.json"
-pref = "../TAassign/problem_prefs.json"
+pref = "data/prefs.json"
 
 function run_solver(prob,pref,solutionfile)
   open(solutionfile,"w") do sol
