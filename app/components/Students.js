@@ -439,7 +439,7 @@ class _Assignments extends Component{
                    <Glyphicon glyph="minus"/>
                  </Button>
                  <Button bsSize="xsmall" disabled={disabled}
-                         bsStyle={(assign.get('fix') ? "primary" : "")}
+                         bsStyle={(assign.get('fix') ? "primary" : "default")}
                          onClick={to => onFix(name,cid,!assign.get('fix'))}
                          active={assign.get('fix')}>
                    <Glyphicon glyph="magnet"/>
