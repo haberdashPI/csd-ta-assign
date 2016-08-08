@@ -37,6 +37,7 @@ class _SolveDialog extends Component{
       hour_unit: config.hour_unit,
       max_units: 2,
       quarter_max_units: 2,
+      quarter_max_courses: 1,
       student_weight: 1,
       student_extrahour_weight: 1.5,
       instructor_weight: 1.5,
@@ -76,6 +77,14 @@ class _SolveDialog extends Component{
                       validate={(x) => x % this.state.hour_unit === 0}>
               {this.state.quarter_max_units*7.5}
             </Editable> hours/week for each student, per quarter.
+          </li>
+
+          <li>At most
+            <Editable onChange={to => this.setState({
+                quarter_max_courses: Number(to)})}
+                      validate={(x) => x % 1 === 0 && x > 0}>
+              {this.state.quarter_max_courses}
+            </Editable> course(s) for each student, per quarter.
           </li>
 
           <li>Willing students will take no more than

@@ -89,6 +89,9 @@ type Problem
   # the maximum number of units a student can have for any quarter
   quarter_maxunits::Int
 
+  # the maximum number of courses a student can have for any quarter
+  quarter_maxcourses::Int
+
   # the overall weight given to course rank in the objective function
   rankweight::Float64
 
@@ -141,6 +144,7 @@ function setup_problem(problem,prefs)
 
   hunits = prefs["hour_unit"]
   maxunits = round(Int,prefs["max_units"])
+  quarter_maxcourses = round(Int,prefs["quarter_max_courses"])
   quarter_maxunits = round(Int,prefs["quarter_max_units"])
 
   ranks = [assignment_rank(i,j) for i = 1:nstudents, j = 1:ncourses]
@@ -215,7 +219,8 @@ function setup_problem(problem,prefs)
 
   Problem(problem,nstudents,ncourses,students,courses,hunits,ranks,reqs,loads,
           course_total,course_range,quarterc,qorder,min_off,max_off,maxunits,
-          quarter_maxunits,rankweight,countweight,hourweight,closetoweight)
+          quarter_maxunits,quarter_maxcourses,rankweight,countweight,hourweight,
+          closetoweight)
 end
 
 type Solution
@@ -261,20 +266,26 @@ function setup_constraints(m,assignment,p::Problem,old::Solution)
   @constraint(m,p.course_total[j=1:p.ncourses]' .==
               sum{assignment[i,j,k], i=1:p.nstudents,k=1:p.maxunits})
 
-  # students cannot have more than the max hours in a quarter
+  # students cannot have more than the max hours or courses in a quarter
   if !isempty(p.quarterc[1])
     @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[1],
                       k=1:p.maxunits} .≤ p.quarter_maxunits)
+    @constraint(m,sum{assignment[i=1:p.nstudents,j,1], j=p.quarterc[1]} .≤
+                p.quarter_maxcourses)
   end
 
   if !isempty(p.quarterc[2])
     @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[2],
                       k=1:p.maxunits} .≤ p.quarter_maxunits)
+    @constraint(m,sum{assignment[i=1:p.nstudents,j,1], j=p.quarterc[2]} .≤
+                p.quarter_maxcourses)
   end
 
   if !isempty(p.quarterc[3])
     @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[3],
                       k=1:p.maxunits} .≤ p.quarter_maxunits)
+    @constraint(m,sum{assignment[i=1:p.nstudents,j,1], j=p.quarterc[3]} .≤
+                p.quarter_maxcourses)
   end
 
   # students' overall load cannot be too far off from their target load
