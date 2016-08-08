@@ -265,10 +265,14 @@ function setup_constraints(m,assignment,p::Problem,old::Solution)
   if !isempty(p.quarterc[1])
     @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[1],
                       k=1:p.maxunits} .≤ p.quarter_maxunits)
-  elseif !isempty(p.quarterc[1])
+  end
+
+  if !isempty(p.quarterc[2])
     @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[2],
                       k=1:p.maxunits} .≤ p.quarter_maxunits)
-  elseif !isempty(p.quarterc[3])
+  end
+
+  if !isempty(p.quarterc[3])
     @constraint(m,sum{assignment[i=1:p.nstudents,j,k], j=p.quarterc[3],
                       k=1:p.maxunits} .≤ p.quarter_maxunits)
   end
