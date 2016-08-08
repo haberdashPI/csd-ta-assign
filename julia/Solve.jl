@@ -314,8 +314,8 @@ function setup_objective(m,assignment,p::Problem)
              sum{assignment[i,j,k]*p.ranks[i,j],
                  i=1:p.nstudents,j=1:p.ncourses,k=1:p.maxunits} +
 
-             # all else being equal, we prefer courses to be
-             # assigned all in one block (all hours to one student)
+             # all else being equal, we want to minimize the number of courses a
+             # student is assigned
              p.countweight *
              (-sum{assignment[i,j,1], i=1:p.nstudents,j=1:p.ncourses}) +
 
